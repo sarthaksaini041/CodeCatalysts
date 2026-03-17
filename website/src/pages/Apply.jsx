@@ -63,7 +63,7 @@ const STEP_FIELDS = [
 ];
 
 /* ── Custom Select Component ── */
-const CustomSelect = ({ value, onChange, options, placeholder, baseStyle, error, icons = {} }) => {
+const CustomSelect = ({ value, onChange, options, placeholder, baseStyle, icons = {} }) => {
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState('bottom');
   const containerRef = useRef(null);
@@ -73,7 +73,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, baseStyle, error,
       const rect = containerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      // If less than 300px below and more space above, open upwards
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDirection(spaceBelow < 300 && spaceAbove > spaceBelow ? 'top' : 'bottom');
     }
   }, [open]);
@@ -306,9 +306,9 @@ const ApplyPage = () => {
 
       setStatus('success');
       setStatusMsg('Application submitted! We will reach out within 1-3 days.');
-    } catch (err) {
+    } catch (error) {
       setStatus('error');
-      setStatusMsg(err.message || 'Submission failed. Please try again.');
+      setStatusMsg(error.message || 'Submission failed. Please try again.');
     } finally {
       setSubmitting(false);
     }

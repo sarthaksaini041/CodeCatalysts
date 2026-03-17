@@ -4,6 +4,7 @@ dist/
 .env
 .env.*
 !.env.example
+api key.txt
 
 .vercel/
 .DS_Store
@@ -12,5 +13,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
-.vercel

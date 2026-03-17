@@ -61,7 +61,6 @@ Website: https://codecatalysts-ten.vercel.app/
 |-- api/
 |-- assets/
 |   `-- team/
-|-- backend/
 |-- website/
 |   |-- components/
 |   |-- pages/
@@ -98,14 +97,20 @@ npm run preview
 
 ## Backend Setup
 
-The application form submits through the Vercel serverless entrypoint in [api/apply.js](/e:/CodeCatalysts/api/apply.js), which forwards to the real backend handler in [apply.js](/e:/CodeCatalysts/backend/apply.js) and stores application data in Supabase.
+The application form submits through the Vercel serverless handler in [api/apply.js](/e:/CodeCatalysts/api/apply.js) and stores application data in Supabase.
 
 Required environment variables:
 
 ```env
 SUPABASE_URL=your_supabase_project_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SECRET_KEY=your_supabase_secret_key
 ```
+
+Notes:
+
+- Use the Supabase `Secret key` from your dashboard for the serverless API.
+- Do not expose the secret key in frontend code or commit it to GitHub.
+- The `Publishable key` is only needed if you later connect Supabase directly from the browser.
 
 ## Routes
 
