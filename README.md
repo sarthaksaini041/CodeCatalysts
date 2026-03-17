@@ -59,9 +59,10 @@ Website: https://codecatalysts-ten.vercel.app/
 ```text
 .
 |-- api/
-|-- public/
+|-- assets/
 |   `-- team/
-|-- src/
+|-- backend/
+|-- website/
 |   |-- components/
 |   |-- pages/
 |   `-- data.js
@@ -97,7 +98,7 @@ npm run preview
 
 ## Backend Setup
 
-The application form submits to the Vercel serverless function in [api/apply.js](/e:/CodeCatalysts/api/apply.js), which stores application data in Supabase.
+The application form submits through the Vercel serverless entrypoint in [api/apply.js](/e:/CodeCatalysts/api/apply.js), which forwards to the real backend handler in [apply.js](/e:/CodeCatalysts/backend/apply.js) and stores application data in Supabase.
 
 Required environment variables:
 
