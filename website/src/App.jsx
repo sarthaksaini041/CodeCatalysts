@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ParallaxBG from './components/ParallaxBG';
@@ -8,8 +9,50 @@ import Projects from './components/Projects';
 import Journey from './components/Journey';
 import Join from './components/Join';
 import ApplyPage from './pages/Apply';
+import Preloader from './components/Preloader';
 
 import { motion } from 'framer-motion';
+
+/* ── Stagger container — orchestrates child entrance ── */
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+/* ── Slide-down (for Navbar) ── */
+const slideDown = {
+  hidden: { opacity: 0, y: -30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] },
+  },
+};
+
+/* ── Fade-up (for Hero + content) ── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 35 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] },
+  },
+};
+
+/* ── Scale-fade (for background) ── */
+const scaleFade = {
+  hidden: { opacity: 0, scale: 1.05 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.2, ease: [0.25, 0.4, 0.25, 1] },
+  },
+};
 
 const SectionWrapper = ({ children, delay = 0 }) => (
   <motion.div
@@ -22,39 +65,59 @@ const SectionWrapper = ({ children, delay = 0 }) => (
   </motion.div>
 );
 
-function HomePage() {
+function HomePage({ ready }) {
   return (
-    <>
-      <ParallaxBG />
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate={ready ? 'visible' : 'hidden'}
+    >
+      {/* Background scales in first */}
+      <motion.div variants={scaleFade}>
+        <ParallaxBG />
+      </motion.div>
+
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <Navbar />
+        {/* Navbar slides down */}
+        <motion.div variants={slideDown}>
+          <Navbar />
+        </motion.div>
+
         <main>
-          <Hero />
+          {/* Hero fades up */}
+          <motion.div variants={fadeUp}>
+            <Hero />
+          </motion.div>
+
           <SectionWrapper delay={0.1}><About /></SectionWrapper>
           <SectionWrapper delay={0.1}><Team /></SectionWrapper>
           <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
           <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
         </main>
-        <Join />
+
+        <motion.div variants={fadeUp}>
+          <Join />
+        </motion.div>
       </div>
-    </>
+    </motion.div>
   );
 }
 
 function App() {
+  const [preloaderDone, setPreloaderDone] = useState(false);
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
+    <>
+      {!preloaderDone && (
+        <Preloader onComplete={() => setPreloaderDone(true)} />
+      )}
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage ready={preloaderDone} />} />
           <Route path="/apply" element={<ApplyPage />} />
         </Routes>
       </BrowserRouter>
-    </motion.div>
+    </>
   );
 }
 
