@@ -35,7 +35,6 @@ Current team members featured on the website:
 
 Website: https://codecatalysts-ten.vercel.app/
 
-
 ## Features
 
 - modern landing page for the community
@@ -60,22 +59,14 @@ Website: https://codecatalysts-ten.vercel.app/
 ```text
 .
 |-- api/
-|   `-- apply.js
 |-- public/
-|   |-- favicon.ico
-|   |-- icon.png
 |   `-- team/
 |-- src/
 |   |-- components/
 |   |-- pages/
-|   |-- App.jsx
-|   |-- data.js
-|   |-- index.css
-|   `-- main.jsx
-|-- index.html
+|   `-- data.js
 |-- package.json
-|-- vercel.json
-`-- vite.config.js
+`-- vercel.json
 ```
 
 ## Getting Started
