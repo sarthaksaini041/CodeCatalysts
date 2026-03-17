@@ -63,13 +63,13 @@ export default async function handler(req, res) {
     const { error } = await supabase.from(APPLY_TABLE).insert([payload]);
     
     if (error) {
-      console.error("Supabase insert error:", error);
-      return res.status(400).json({ error: error.message });
+      console.error('Supabase insert error:', error);
+      return res.status(500).json({ error: 'Could not save application right now.' });
     }
 
     return res.status(200).json({ ok: true, message: 'Application submitted securely.' });
   } catch (err) {
-    console.error("Serverless Function Error:", err);
+    console.error('Serverless Function Error:', err);
     return res.status(500).json({ error: 'Failed to process application' });
   }
 }
