@@ -19,14 +19,23 @@ const Projects = () => {
           </p>
         </div>
 
-        <div className="neon-card" style={{ textAlign: 'center', padding: '4rem 2rem', maxWidth: '750px', margin: '0 auto' }}>
+        <div className="static-texture-card rough-gradient-card" style={{
+          '--card-bg-start': 'rgba(22, 24, 50, 0.96)',
+          '--card-bg-end': 'rgba(10, 8, 22, 0.98)',
+          '--card-glow-a': 'rgba(0, 212, 255, 0.2)',
+          '--card-glow-b': 'rgba(127, 108, 255, 0.18)',
+          textAlign: 'center',
+          padding: '4rem 2rem',
+          maxWidth: '750px',
+          margin: '0 auto',
+        }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--accent-gradient)' }} />
 
           <div style={{
             width: '64px', height: '64px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,212,255,.06)',
-            border: '1px solid rgba(0,212,255,.1)',
+            background: 'linear-gradient(180deg, rgba(0,212,255,.1), rgba(255,255,255,.02))',
+            border: '1px solid rgba(0,212,255,.16)',
             borderRadius: '14px', color: 'var(--neon-cyan)',
             margin: '0 auto 2rem auto',
           }}>

@@ -291,7 +291,6 @@ const ApplyPage = () => {
     setSubmitting(true); setStatus('idle'); setStatusMsg('');
     try {
       // Send the payload to our secure Vercel serverless function backend proxy
-      // The backend hides the Supabase SERVICE_ROLE_KEY and maps this to the DB.
       const res = await fetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -471,17 +470,22 @@ const ApplyPage = () => {
             filter: 'blur(40px)', opacity: 0.6, pointerEvents: 'none', zIndex: -1,
           }} />
 
-          <div style={{
+          <div className="static-texture-card" style={{
+            padding: 0,
             borderRadius: '24px',
-            background: 'rgba(10,12,28,.75)',
+            background: 'radial-gradient(120% 100% at 50% 100%, rgba(0, 212, 255, 0.15) 0%, rgba(10, 10, 26, 0.95) 100%)',
             border: '1px solid rgba(255,255,255,.08)',
             boxShadow: '0 24px 60px rgba(0,0,0,.4)',
             backdropFilter: 'blur(20px)',
             overflow: 'visible',
+            zIndex: 1,
+            transform: 'none'
           }}>
           {/* top accent */}
           <div style={{
             height: '2px',
+            borderTopLeftRadius: '24px',
+            borderTopRightRadius: '24px',
             background: 'linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent)',
           }} />
 

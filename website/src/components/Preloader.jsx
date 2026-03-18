@@ -518,7 +518,7 @@ function drawFrame(ctx, W, H, ms, bgParts, fgParts) {
 /* ════════════════════════════════════════════════
    PRELOADER REACT COMPONENT
 ════════════════════════════════════════════════ */
-export default function Preloader({ onComplete }) {
+export default function Preloader({ onReveal, onComplete }) {
   const canvasRef = useRef(null);
   const [visible, setVisible] = useState(true);
   const rafRef = useRef(null);
@@ -526,14 +526,17 @@ export default function Preloader({ onComplete }) {
   const bgParts = useRef([]);
   const fgParts = useRef([]);
   const fontReady = useRef(false);
+  const revealStarted = useRef(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!canvas) return undefined;
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+    if (!ctx) return undefined;
 
     const setup = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const W = window.innerWidth;
       const H = window.innerHeight;
       canvas.width = W * dpr;
@@ -546,7 +549,7 @@ export default function Preloader({ onComplete }) {
     };
 
     setup();
-    window.addEventListener('resize', setup);
+    window.addEventListener('resize', setup, { passive: true });
 
     // Wait for font, but don't block if it takes too long
     const fontPromise = document.fonts.load(`800 96px 'Space Grotesk'`);
@@ -556,8 +559,9 @@ export default function Preloader({ onComplete }) {
     const tick = (ts) => {
       if (!startRef.current) startRef.current = ts;
       const elapsed = ts - startRef.current;
-      const W = canvas.width / (window.devicePixelRatio || 1);
-      const H = canvas.height / (window.devicePixelRatio || 1);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const W = canvas.width / dpr;
+      const H = canvas.height / dpr;
 
       if (fontReady.current) {
         drawFrame(ctx, W, H, elapsed, bgParts.current, fgParts.current);
@@ -566,6 +570,10 @@ export default function Preloader({ onComplete }) {
       if (elapsed < TOTAL) {
         rafRef.current = requestAnimationFrame(tick);
       } else {
+        if (!revealStarted.current) {
+          revealStarted.current = true;
+          onReveal?.();
+        }
         setVisible(false);
       }
     };
@@ -575,7 +583,7 @@ export default function Preloader({ onComplete }) {
       window.removeEventListener('resize', setup);
       cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [onReveal]);
 
   const handleExitComplete = useCallback(() => {
     document.body.style.overflow = '';

@@ -13,5 +13,18 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('framer-motion')) return 'motion'
+          if (id.includes('react-router')) return 'router'
+          if (id.includes('lucide-react')) return 'icons'
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('react') || id.includes('scheduler')) return 'react-vendor'
+          return 'vendor'
+        },
+      },
+    },
   },
 })

@@ -41,7 +41,13 @@ const Journey = () => {
                 boxShadow: '0 0 12px rgba(0,212,255,.4)',
               }} />
 
-              <div className="neon-card" style={{ padding: '1.8rem' }}>
+              <div className="static-texture-card rough-gradient-card" style={{
+                '--card-bg-start': 'rgba(12, 42, 58, 0.96)',
+                '--card-bg-end': 'rgba(8, 10, 22, 0.98)',
+                '--card-glow-a': 'rgba(34, 211, 238, 0.22)',
+                '--card-glow-b': 'rgba(167, 139, 250, 0.14)',
+                padding: '1.8rem',
+              }}>
                 <span style={{
                   color: 'var(--neon-purple)', fontWeight: 600, fontSize: '0.85rem',
                   letterSpacing: '0.04em', marginBottom: '0.6rem', display: 'block',

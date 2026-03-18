@@ -3,6 +3,32 @@ import { howWeBuild } from '../data';
 import { Lightbulb, Code2, Users, Palette } from 'lucide-react';
 
 const icons = [Lightbulb, Code2, Users, Palette];
+const cardPalettes = [
+  {
+    '--card-bg-start': 'rgba(16, 30, 56, 0.96)',
+    '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
+    '--card-glow-a': 'rgba(0, 212, 255, 0.2)',
+    '--card-glow-b': 'rgba(87, 140, 255, 0.12)',
+  },
+  {
+    '--card-bg-start': 'rgba(40, 19, 58, 0.96)',
+    '--card-bg-end': 'rgba(11, 10, 28, 0.98)',
+    '--card-glow-a': 'rgba(167, 139, 250, 0.18)',
+    '--card-glow-b': 'rgba(116, 50, 180, 0.14)',
+  },
+  {
+    '--card-bg-start': 'rgba(14, 36, 44, 0.96)',
+    '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
+    '--card-glow-a': 'rgba(45, 212, 191, 0.18)',
+    '--card-glow-b': 'rgba(0, 212, 255, 0.12)',
+  },
+  {
+    '--card-bg-start': 'rgba(30, 22, 50, 0.96)',
+    '--card-bg-end': 'rgba(10, 10, 24, 0.98)',
+    '--card-glow-a': 'rgba(244, 114, 182, 0.12)',
+    '--card-glow-b': 'rgba(167, 139, 250, 0.18)',
+  },
+];
 
 const About = () => {
   return (
@@ -29,13 +55,17 @@ const About = () => {
         }}>
           {howWeBuild.map((item, index) => {
             const Icon = icons[index] || Code2;
+            const palette = cardPalettes[index % cardPalettes.length];
             return (
-              <div key={index} className="neon-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div key={index} className="static-texture-card rough-gradient-card" style={{
+                ...palette,
+                display: 'flex', flexDirection: 'column', gap: '1rem',
+              }}>
                 <div style={{
                   width: '46px', height: '46px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(0,212,255,.06)',
-                  border: '1px solid rgba(0,212,255,.1)',
+                  background: 'linear-gradient(180deg, rgba(0,212,255,.08), rgba(255,255,255,.02))',
+                  border: '1px solid rgba(0,212,255,.14)',
                   borderRadius: '10px', color: 'var(--neon-cyan)',
                 }}>
                   <Icon size={22} />

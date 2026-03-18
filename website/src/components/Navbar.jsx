@@ -8,9 +8,28 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    let rafId = null;
+
+    const updateScrollState = () => {
+      rafId = null;
+      const nextValue = window.scrollY > 50;
+      setIsScrolled((prev) => (prev === nextValue ? prev : nextValue));
+    };
+
+    const handleScroll = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(updateScrollState);
+    };
+
+    updateScrollState();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   const navLinks = [
@@ -18,6 +37,7 @@ const Navbar = () => {
     { name: 'Team', href: '#team' },
     { name: 'Projects', href: '#projects' },
     { name: 'Journey', href: '#journey' },
+    { name: 'FAQ', href: '#faq' },
     { name: 'Join Us', href: '#join' },
   ];
 
@@ -37,7 +57,12 @@ const Navbar = () => {
           <ul className="nav-links">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a href={link.href} className="nav-link">{link.name}</a>
+                <a
+                  href={link.href}
+                  className={`nav-link${link.name === 'Join Us' ? ' nav-link-cta' : ''}`}
+                >
+                  {link.name}
+                </a>
               </li>
             ))}
           </ul>
@@ -58,7 +83,7 @@ const Navbar = () => {
           <ul>
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a href={link.href} className="mobile-link"
+                <a href={link.href} className={`mobile-link${link.name === 'Join Us' ? ' mobile-link-cta' : ''}`}
                   onClick={() => setIsMobileMenuOpen(false)}>
                   {link.name}
                 </a>
@@ -74,14 +99,15 @@ const Navbar = () => {
           padding: 1rem 0;
           transition: all 0.45s cubic-bezier(.23,1,.32,1);
           border-bottom: 1px solid transparent;
+          background: linear-gradient(180deg, rgba(2,2,18,0.72) 0%, rgba(2,2,18,0.38) 58%, rgba(2,2,18,0) 100%);
         }
         .site-nav[data-scrolled] {
           padding: 0.5rem 0;
-          background: rgba(2,2,18,0.75);
+          background: rgba(2,2,18,0.82);
           backdrop-filter: blur(24px) saturate(130%);
           -webkit-backdrop-filter: blur(24px) saturate(130%);
-          border-bottom-color: rgba(255,255,255,.04);
-          box-shadow: 0 8px 32px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,255,255,.02);
+          border-bottom-color: rgba(255,255,255,.08);
+          box-shadow: 0 8px 32px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,255,255,.03);
         }
 
         .nav-inner {
@@ -131,22 +157,39 @@ const Navbar = () => {
           gap: 0.3rem;
           padding: 0.35rem;
           border-radius: 14px;
-          background: rgba(255,255,255,.02);
-          border: 1px solid rgba(255,255,255,.04);
+          background: rgba(8, 12, 30, 0.52);
+          border: 1px solid rgba(255,255,255,.08);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          box-shadow: 0 14px 34px rgba(0,0,0,.24);
         }
         .nav-link {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: rgba(180,190,210,.65);
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: rgba(236, 241, 252, 0.92);
           padding: 0.45rem 1rem;
           border-radius: 10px;
           transition: all 0.25s ease;
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
           position: relative;
+          text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
         }
         .nav-link:hover {
           color: #fff;
-          background: rgba(255,255,255,.05);
+          background: rgba(255,255,255,.08);
+        }
+        .nav-link-cta {
+          color: #041a2b;
+          background: linear-gradient(100deg, #2ae8ff 0%, #4acfff 40%, #7d6cff 100%);
+          border: 1px solid rgba(120, 225, 255, 0.45);
+          box-shadow: 0 12px 30px rgba(0, 212, 255, 0.22), 0 8px 22px rgba(125, 108, 255, 0.18);
+          text-shadow: none;
+        }
+        .nav-link-cta:hover {
+          color: #03131e;
+          background: linear-gradient(100deg, #49eeff 0%, #62d7ff 40%, #9279ff 100%);
+          box-shadow: 0 16px 34px rgba(0, 212, 255, 0.28), 0 10px 28px rgba(125, 108, 255, 0.22);
+          transform: translateY(-1px);
         }
 
         /* Mobile */
@@ -179,14 +222,25 @@ const Navbar = () => {
         .mobile-link {
           display: block;
           font-size: 0.95rem; font-weight: 600;
-          color: rgba(180,190,210,.7);
+          color: rgba(236, 241, 252, 0.9);
           padding: 0.7rem 1rem;
           border-radius: 10px;
           transition: all 0.25s ease;
         }
         .mobile-link:hover {
           color: var(--neon-cyan);
-          background: rgba(0,212,255,.04);
+          background: rgba(0,212,255,.07);
+        }
+        .mobile-link-cta {
+          margin-top: 0.35rem;
+          color: #041a2b;
+          background: linear-gradient(100deg, #2ae8ff 0%, #55d8ff 42%, #8a73ff 100%);
+          border: 1px solid rgba(120, 225, 255, 0.4);
+          box-shadow: 0 14px 30px rgba(0, 212, 255, 0.18), 0 8px 20px rgba(125, 108, 255, 0.16);
+        }
+        .mobile-link-cta:hover {
+          color: #03131e;
+          background: linear-gradient(100deg, #4bf0ff 0%, #68ddff 42%, #9a83ff 100%);
         }
 
         @media (min-width: 768px) {
