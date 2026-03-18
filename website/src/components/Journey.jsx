@@ -3,7 +3,7 @@ import { journeyTimeline } from '../data';
 
 const Journey = () => {
   return (
-    <section id="journey" className="section" style={{ background: 'transparent' }}>
+    <section className="section" style={{ background: 'transparent' }}>
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>

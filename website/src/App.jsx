@@ -3,16 +3,46 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
+import Join from './components/Join';
 import Preloader from './components/Preloader';
 
 import { motion } from 'framer-motion';
 
+const PRELOADER_SESSION_KEY = 'codecatalysts:preloader-complete';
 const ParallaxBG = lazy(() => import('./components/ParallaxBG'));
 const Team = lazy(() => import('./components/Team'));
 const Projects = lazy(() => import('./components/Projects'));
 const Journey = lazy(() => import('./components/Journey'));
-const Join = lazy(() => import('./components/Join'));
 const ApplyPage = lazy(() => import('./pages/Apply'));
+const ANCHOR_INTENT_EVENT = 'codecatalysts:anchor-intent';
+
+function shouldSkipPreloader() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    const alreadySeen = window.sessionStorage.getItem(PRELOADER_SESSION_KEY) === 'true';
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const isHomeRoute = window.location.pathname === '/';
+
+    return !isHomeRoute || alreadySeen || prefersReducedMotion;
+  } catch {
+    return window.location.pathname !== '/';
+  }
+}
+
+function markPreloaderComplete() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(PRELOADER_SESSION_KEY, 'true');
+  } catch {
+    // Ignore storage failures and continue without session persistence.
+  }
+}
 
 /* ── Stagger container — orchestrates child entrance ── */
 const staggerContainer = {
@@ -93,6 +123,7 @@ const SectionWrapper = ({ children, delay = 0 }) => (
 const DeferredSection = ({
   children,
   minHeight,
+  anchorId,
   rootMargin = '500px 0px 250px 0px',
 }) => {
   const containerRef = useRef(null);
@@ -120,8 +151,25 @@ const DeferredSection = ({
     return () => observer.disconnect();
   }, [rootMargin, shouldRender]);
 
+  useEffect(() => {
+    if (!anchorId || shouldRender) return undefined;
+
+    const handleAnchorIntent = (event) => {
+      if (event.detail === anchorId) {
+        setShouldRender(true);
+      }
+    };
+
+    window.addEventListener(ANCHOR_INTENT_EVENT, handleAnchorIntent);
+    return () => window.removeEventListener(ANCHOR_INTENT_EVENT, handleAnchorIntent);
+  }, [anchorId, shouldRender]);
+
   return (
-    <div ref={containerRef} style={{ minHeight, width: '100%' }}>
+    <div
+      id={anchorId}
+      ref={containerRef}
+      style={{ minHeight, width: '100%', scrollMarginTop: '6.75rem' }}
+    >
       {shouldRender ? children : <SectionFallback minHeight={minHeight} />}
     </div>
   );
@@ -160,45 +208,45 @@ function HomePage({ backgroundReady, contentReady }) {
           </motion.div>
 
           <SectionWrapper delay={0.1}><About /></SectionWrapper>
-          <DeferredSection minHeight={980}>
+          <DeferredSection anchorId="team" minHeight={980}>
             <Suspense fallback={<SectionFallback minHeight={980} />}>
               <SectionWrapper delay={0.1}><Team /></SectionWrapper>
             </Suspense>
           </DeferredSection>
-          <DeferredSection minHeight={560}>
+          <DeferredSection anchorId="projects" minHeight={560}>
             <Suspense fallback={<SectionFallback minHeight={560} />}>
               <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
             </Suspense>
           </DeferredSection>
-          <DeferredSection minHeight={720}>
+          <DeferredSection anchorId="journey" minHeight={720}>
             <Suspense fallback={<SectionFallback minHeight={720} />}>
               <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
             </Suspense>
           </DeferredSection>
         </main>
 
-        <DeferredSection minHeight={860} rootMargin="700px 0px 300px 0px">
-          <Suspense fallback={<SectionFallback minHeight={860} />}>
-            <motion.div variants={fadeUp}>
-              <Join />
-            </motion.div>
-          </Suspense>
-        </DeferredSection>
+        <motion.div variants={fadeUp}>
+          <Join />
+        </motion.div>
       </div>
     </motion.div>
   );
 }
 
 function App() {
-  const [backgroundReady, setBackgroundReady] = useState(false);
-  const [preloaderDone, setPreloaderDone] = useState(false);
+  const skipPreloader = shouldSkipPreloader();
+  const [backgroundReady, setBackgroundReady] = useState(skipPreloader);
+  const [preloaderDone, setPreloaderDone] = useState(skipPreloader);
 
   return (
     <>
-      {!preloaderDone && (
+      {!preloaderDone && !skipPreloader && (
         <Preloader
           onReveal={() => setBackgroundReady(true)}
-          onComplete={() => setPreloaderDone(true)}
+          onComplete={() => {
+            markPreloaderComplete();
+            setPreloaderDone(true);
+          }}
         />
       )}
       <BrowserRouter>

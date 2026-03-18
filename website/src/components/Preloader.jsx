@@ -552,9 +552,20 @@ export default function Preloader({ onReveal, onComplete }) {
     window.addEventListener('resize', setup, { passive: true });
 
     // Wait for font, but don't block if it takes too long
-    const fontPromise = document.fonts.load(`800 96px 'Space Grotesk'`);
-    const fallbackTimer = setTimeout(() => { fontReady.current = true; }, 300);
-    fontPromise.then(() => { fontReady.current = true; clearTimeout(fallbackTimer); }).catch(() => { fontReady.current = true; });
+    const fallbackTimer = window.setTimeout(() => { fontReady.current = true; }, 300);
+    const fontPromise = document.fonts?.load
+      ? document.fonts.load(`800 96px 'Space Grotesk'`)
+      : Promise.resolve();
+
+    fontPromise
+      .then(() => {
+        fontReady.current = true;
+        window.clearTimeout(fallbackTimer);
+      })
+      .catch(() => {
+        fontReady.current = true;
+        window.clearTimeout(fallbackTimer);
+      });
 
     const tick = (ts) => {
       if (!startRef.current) startRef.current = ts;
@@ -580,7 +591,9 @@ export default function Preloader({ onReveal, onComplete }) {
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
+      document.body.style.overflow = '';
       window.removeEventListener('resize', setup);
+      window.clearTimeout(fallbackTimer);
       cancelAnimationFrame(rafRef.current);
     };
   }, [onReveal]);

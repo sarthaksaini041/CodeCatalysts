@@ -1,10 +1,43 @@
 import { createClient } from '@supabase/supabase-js';
 
 const APPLY_TABLE = 'Applications';
+const ALLOWED_DOMAINS = new Set([
+  'Frontend Development',
+  'Backend Development',
+  'App Development',
+  'AI/ML',
+  'Cloud',
+  'Cyber Security',
+  'UI/UX',
+]);
+
+const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
+
+const normalizeProfileUrl = (value) => {
+  const normalized = normalizeString(value);
+  if (!normalized) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return '';
+    }
+
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+};
 
 const getSupabase = () => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.trim();
+  const key = (
+    process.env.SUPABASE_SECRET_KEY
+    || process.env.SUPABASE_SERVICE_ROLE_KEY
+    || ''
+  ).trim();
 
   if (!url || !key) {
     return null;
@@ -15,6 +48,7 @@ const getSupabase = () => {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
@@ -26,44 +60,53 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = req.body;
+    const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
-    if (!data.name?.trim() || !data.email?.trim() || !data.domain || !data.techStack?.trim()) {
+    if (!data || typeof data !== 'object') {
+      return res.status(400).json({ error: 'Invalid request payload.' });
+    }
+
+    const name = normalizeString(data.name);
+    const email = normalizeString(data.email);
+    const year = normalizeString(data.year);
+    const college = normalizeString(data.college);
+    const branch = normalizeString(data.branch);
+    const github = normalizeProfileUrl(data.github);
+    const linkedin = normalizeProfileUrl(data.linkedin);
+    const domain = normalizeString(data.domain);
+    const techStack = normalizeString(data.techStack);
+    const whyJoin = normalizeString(data.whyJoin);
+    const project = normalizeString(data.project);
+
+    if (!name || !email || !domain || !techStack) {
       return res.status(400).json({ error: 'Missing required fundamental fields.' });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Invalid email format.' });
     }
 
-    const isValidUrl = (url) => {
-      if (!url) return true;
+    if (!ALLOWED_DOMAINS.has(domain)) {
+      return res.status(400).json({ error: 'Invalid application domain selected.' });
+    }
 
-      try {
-        new URL(url);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    if (!isValidUrl(data.github) || !isValidUrl(data.linkedin)) {
+    if ((normalizeString(data.github) && !github) || (normalizeString(data.linkedin) && !linkedin)) {
       return res.status(400).json({ error: 'Invalid social profile URLs.' });
     }
 
     const payload = {
-      name: data.name.trim(),
-      email: data.email.trim(),
-      year: data.year || '',
-      college: data.college ? data.college.trim() : '',
-      branch: data.branch ? data.branch.trim() : '',
-      github: data.github ? data.github.trim() : '',
-      linkedin: data.linkedin ? data.linkedin.trim() : '',
+      name,
+      email,
+      year,
+      college,
+      branch,
+      github,
+      linkedin,
       portfolio: '',
-      domain: data.domain,
-      tech_stack: data.techStack ? data.techStack.trim() : '',
-      why_join: data.whyJoin ? data.whyJoin.trim() : '',
-      project: data.project ? data.project.trim() : '',
+      domain,
+      tech_stack: techStack,
+      why_join: whyJoin,
+      project,
     };
 
     const { error } = await supabase.from(APPLY_TABLE).insert([payload]);
@@ -75,6 +118,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, message: 'Application submitted securely.' });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return res.status(400).json({ error: 'Request body must be valid JSON.' });
+    }
+
     console.error('Serverless Function Error:', error);
     return res.status(500).json({ error: 'Failed to process application' });
   }

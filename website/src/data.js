@@ -37,12 +37,17 @@ export const teamData = [
     name: "Ansh Aditya",
     role: "Backend Engineer",
     department: "Backend",
-    bio: "Specializes in designing robust APIs and scalable backend architectures. Expert in building reliable server-side solutions.",
+    bio: "Backend-focused developer with a strong foundation in C, Java, and Python, and an interest in applying AI to practical problem-solving.",
     image: "/team/ansh.jpg",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    instagram: "https://instagram.com",
-    skills: ["APIs", "Databases", "System Design"]
+    imagePosition: {
+      card: "50% 22%",
+      avatar: "50% 18%",
+      modal: "50% 18%"
+    },
+    github: "https://github.com/anshaditya0",
+    linkedin: "https://www.linkedin.com/in/ansh-aditya-107514384/",
+    instagram: "https://www.instagram.com/ansh_aditya_2908/",
+    skills: ["C Programming", "Java", "Python", "AI"]
   },
   {
     name: "Radhika Maheshwari",
@@ -88,14 +93,18 @@ export const teamData = [
   },
   {
     name: "Somya Purohit",
-    role: "ML / Data Engineer",
+    role: "AI Developer",
     department: "AI/ML",
-    bio: "Data scientist with expertise in machine learning and predictive analytics. Makes complex algorithms accessible and practical.",
+    bio: "AI developer focused on Python, machine learning, and data science with an interest in practical, data-driven solutions.",
     image: "/team/somya.jpg",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    instagram: "https://instagram.com",
-    skills: ["Python", "Modeling", "Data Workflow"]
+    imagePosition: {
+      card: "50% 28%",
+      avatar: "50% 24%",
+      modal: "50% 24%"
+    },
+    github: "https://github.com/somyapurohit175-rgb",
+    linkedin: "https://www.linkedin.com/in/somyapurohit/",
+    skills: ["Python", "Machine Learning", "Data Science"]
   },
   {
     name: "Shatakshi Bajpai",

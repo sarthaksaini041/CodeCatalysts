@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUpRight, Users } from 'lucide-react';
+import { teamData } from '../data';
 
 const Hero = () => {
   return (
@@ -65,9 +66,9 @@ const Hero = () => {
           marginTop: '5rem', flexWrap: 'wrap',
         }}>
           {[
-            { value: '11', label: 'Team Members' },
+            { value: String(teamData.length), label: 'Team Members' },
             { value: 'Soon', label: 'Projects Shipping' },
-            { value: '∞', label: 'Problems to Solve' },
+            { value: 'Infinite', label: 'Problems to Solve' },
           ].map((s, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
               <div style={{

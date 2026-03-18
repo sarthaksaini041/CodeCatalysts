@@ -12,6 +12,29 @@ const deptColor = {
   Design: '#f472b6',
 };
 
+const getImagePosition = (member, variant) => (
+  member.imagePosition?.[variant]
+  || member.imagePosition?.default
+  || 'top center'
+);
+
+const PLACEHOLDER_PROFILE_URLS = new Set([
+  'https://github.com',
+  'https://www.github.com',
+  'https://linkedin.com',
+  'https://www.linkedin.com',
+  'https://instagram.com',
+  'https://www.instagram.com',
+]);
+
+const hasRealProfileUrl = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  return !PLACEHOLDER_PROFILE_URLS.has(value.trim().replace(/\/+$/, '').toLowerCase());
+};
+
 /* ═══════════════════════════════════════════
    CINEMATIC SPOTLIGHT GRID
    Interactive grid with proximity glow effects
@@ -27,9 +50,11 @@ const SpotlightCard = memo(({ member, color, onClick }) => {
   };
 
   return (
-    <div
+    <button
+      type="button"
       ref={cardRef}
       className="team-card-wrapper"
+      aria-label={`Open ${member.name}'s profile`}
       style={{
         '--team-accent': color,
         '--team-accent-glow': `${color}22`,
@@ -48,6 +73,7 @@ const SpotlightCard = memo(({ member, color, onClick }) => {
             alt={member.name}
             loading="lazy"
             decoding="async"
+            style={{ objectPosition: getImagePosition(member, 'card') }}
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
@@ -68,7 +94,7 @@ const SpotlightCard = memo(({ member, color, onClick }) => {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 });
 SpotlightCard.displayName = 'SpotlightCard';
@@ -82,6 +108,7 @@ const TeamGrid = memo(({ onSelectMember }) => {
           return (
             <motion.div
               key={member.name}
+              className="team-grid-item"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
@@ -174,6 +201,9 @@ const OrbitalDisplay = ({ activeMember, allMembers, onSelectMember }) => {
     marginTop: `-${sz / 2}px`, marginLeft: `-${sz / 2}px`,
     borderRadius: '50%', overflow: 'hidden',
     cursor: 'pointer', transition: 'box-shadow .3s ease',
+    border: 0,
+    padding: 0,
+    background: 'transparent',
   });
 
   return (
@@ -192,18 +222,18 @@ const OrbitalDisplay = ({ activeMember, allMembers, onSelectMember }) => {
         )}
         <div ref={ring1Ref}>
           {ring1Members.map((m) => (
-            <div key={m.name} style={avatar(42)} onClick={() => onSelectMember(m)} title={m.name} className="orbital-avatar">
-              <img src={m.image} alt={m.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', border: '2px solid rgba(255,255,255,.12)' }}
+            <button type="button" key={m.name} style={avatar(42)} onClick={() => onSelectMember(m)} title={m.name} className="orbital-avatar" aria-label={`View ${m.name}`}>
+              <img src={m.image} alt={m.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: getImagePosition(m, 'avatar'), borderRadius: '50%', border: '2px solid rgba(255,255,255,.12)' }}
                 onError={(e) => { e.target.style.display = 'none'; }} />
-            </div>
+            </button>
           ))}
         </div>
         <div ref={ring2Ref}>
           {ring2Members.map((m) => (
-            <div key={m.name} style={avatar(36)} onClick={() => onSelectMember(m)} title={m.name} className="orbital-avatar">
-              <img src={m.image} alt={m.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', border: '2px solid rgba(255,255,255,.08)' }}
+            <button type="button" key={m.name} style={avatar(36)} onClick={() => onSelectMember(m)} title={m.name} className="orbital-avatar" aria-label={`View ${m.name}`}>
+              <img src={m.image} alt={m.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: getImagePosition(m, 'avatar'), borderRadius: '50%', border: '2px solid rgba(255,255,255,.08)' }}
                 onError={(e) => { e.target.style.display = 'none'; }} />
-            </div>
+            </button>
           ))}
         </div>
         {[0, 90, 180, 270].map((angle, i) => {
@@ -236,7 +266,7 @@ const OrbitalDisplay = ({ activeMember, allMembers, onSelectMember }) => {
           <img src={activeMember.image} alt={activeMember.name}
             loading="lazy"
             decoding="async"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: getImagePosition(activeMember, 'modal') }}
             onError={(e) => { e.target.style.display = 'none'; }} />
         </motion.div>
       </div>
@@ -250,6 +280,17 @@ const OrbitalDisplay = ({ activeMember, allMembers, onSelectMember }) => {
 const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
   if (!member) return null;
   const color = deptColor[member.department] || '#00f3ff';
+  const socialLinks = [
+    member.github && hasRealProfileUrl(member.github)
+      ? { href: member.github, label: 'GitHub', icon: Github }
+      : null,
+    member.linkedin && hasRealProfileUrl(member.linkedin)
+      ? { href: member.linkedin, label: 'LinkedIn', icon: Linkedin }
+      : null,
+    member.instagram && hasRealProfileUrl(member.instagram)
+      ? { href: member.instagram, label: 'Instagram', icon: Instagram }
+      : null,
+  ].filter(Boolean);
 
   return (
     <motion.div
@@ -265,12 +306,16 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
         transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
         onClick={(e) => e.stopPropagation()}
         className="cyber-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="team-member-name"
       >
         <span className="corner corner-tl" />
         <span className="corner corner-br" />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
 
-        <button onClick={onClose} className="panel-close-btn"
+        <button type="button" onClick={onClose} className="panel-close-btn"
+          aria-label={`Close ${member.name}'s profile`}
           style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10, width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#888', cursor: 'pointer', transition: 'all .3s ease' }}
         >
           <X size={18} />
@@ -281,7 +326,7 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
 
           <div style={{ padding: '3rem 2.5rem 3rem 1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <motion.div key={member.name} initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '1rem', color: '#fff' }}>
+              <h2 id="team-member-name" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '1rem', color: '#fff' }}>
                 {member.name}
               </h2>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.2rem' }}>
@@ -305,11 +350,15 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
                   </div>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                {member.github && <a href={member.github} target="_blank" rel="noopener noreferrer" className="panel-social-btn"><Github size={15} /> GitHub</a>}
-                {member.linkedin && <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="panel-social-btn"><Linkedin size={15} /> LinkedIn</a>}
-                {member.instagram && <a href={member.instagram} target="_blank" rel="noopener noreferrer" className="panel-social-btn"><Instagram size={15} /> Instagram</a>}
-              </div>
+              {socialLinks.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  {socialLinks.map(({ href, label, icon: Icon }) => (
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="panel-social-btn">
+                      <Icon size={15} /> {label}
+                    </a>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -329,8 +378,23 @@ const Team = () => {
     return () => { document.body.style.overflow = ''; };
   }, [selectedMember]);
 
+  useEffect(() => {
+    if (!selectedMember) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setSelectedMember(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedMember]);
+
   return (
-    <section id="team" className="section cyber-team-section">
+    <section className="section cyber-team-section">
       {/* Section header (above the 3D viewport) */}
       <div className="container" style={{ position: 'relative', zIndex: 3, marginBottom: '1rem' }}>
         <div style={{ textAlign: 'center' }}>
@@ -381,14 +445,27 @@ const Team = () => {
           padding: 2rem 0;
           position: relative;
           z-index: 10;
+          align-items: stretch;
+        }
+
+        .team-grid-item {
+          height: 100%;
         }
 
         .team-card-wrapper {
           position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: clamp(380px, 32vw, 470px);
+          aspect-ratio: 0.82 / 1;
+          border: 0;
           border-radius: 20px;
           background: rgba(255, 255, 255, 0.05); /* Border base color */
           padding: 1px; /* The spotlight border width */
           cursor: pointer;
+          text-align: left;
+          appearance: none;
+          font: inherit;
           transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
           --spotlight-x: 50%;
           --spotlight-y: 50%;
@@ -396,6 +473,11 @@ const Team = () => {
 
         .team-card-wrapper:hover {
           transform: translateY(-8px);
+        }
+        .team-card-wrapper:focus-visible {
+          outline: 2px solid rgba(0, 243, 255, 0.85);
+          outline-offset: 4px;
+          transform: translateY(-4px);
         }
 
         .team-card-border-glow {
@@ -421,6 +503,7 @@ const Team = () => {
           border-radius: 19px;
           overflow: hidden;
           height: 100%;
+          min-height: 100%;
           display: flex;
           flex-direction: column;
         }
@@ -446,7 +529,9 @@ const Team = () => {
         }
 
         .team-card-image {
-          width: 100%; height: 280px;
+          width: 100%;
+          height: 72%;
+          min-height: clamp(250px, 24vw, 340px);
           overflow: hidden; position: relative;
           background: rgba(20, 20, 40, 0.5);
           z-index: 2;
@@ -471,9 +556,12 @@ const Team = () => {
 
         .team-card-body {
           padding: 0 1.25rem 1.25rem;
-          margin-top: -16px;
+          margin-top: -20px;
           position: relative; z-index: 4;
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
         }
         
         .team-role {
@@ -499,12 +587,37 @@ const Team = () => {
 
         @media (max-width: 768px) {
           .team-grid-container {
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 1.25rem;
-            padding: 1rem;
+            padding: 1rem 0;
+          }
+          .team-card-wrapper {
+            min-height: clamp(320px, 58vw, 390px);
+            aspect-ratio: 0.72 / 1;
           }
           .team-card-image {
-            height: 240px;
+            height: 70%;
+            min-height: 220px;
+          }
+          .team-card-body {
+            padding: 0 1rem 1rem;
+          }
+          .team-name {
+            font-size: 1.02rem;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .team-grid-container {
+            grid-template-columns: 1fr;
+          }
+          .team-card-wrapper {
+            min-height: 410px;
+            aspect-ratio: 0.78 / 1;
+          }
+          .team-card-image {
+            height: 74%;
+            min-height: 300px;
           }
         }
 
@@ -547,6 +660,12 @@ const Team = () => {
         }
         .orbital-avatar:hover img {
           border-color: rgba(0,243,255,.5) !important;
+        }
+        .orbital-avatar:focus-visible {
+          outline: 2px solid rgba(0, 243, 255, 0.85);
+          outline-offset: 3px;
+          box-shadow: 0 0 16px rgba(0,243,255,.3) !important;
+          z-index: 10;
         }
         @media (max-width: 768px) {
           .panel-grid { grid-template-columns: 1fr !important; }

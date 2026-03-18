@@ -3,7 +3,7 @@ import { Rocket } from 'lucide-react';
 
 const Projects = () => {
   return (
-    <section id="projects" className="section" style={{ background: 'transparent' }}>
+    <section className="section" style={{ background: 'transparent' }}>
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>

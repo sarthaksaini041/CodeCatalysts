@@ -32,6 +32,7 @@ const faqItems = [
 
 const Join = () => {
   const [openFaq, setOpenFaq] = useState(0);
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer style={{
@@ -205,7 +206,7 @@ const Join = () => {
             display: 'flex', justifyContent: 'center',
           }}>
             <p style={{ color: 'rgba(200,210,230,.8)', fontSize: '0.85rem', textAlign: 'center', fontWeight: 500 }}>
-              &copy; 2026 Code Catalysts. Built by the team.
+              &copy; {currentYear} Code Catalysts. Built by the team.
             </p>
           </div>
         </div>

@@ -48,11 +48,7 @@ const About = () => {
           </p>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
-          gap: '1.5rem',
-        }}>
+        <div className="adaptive-card-grid">
           {howWeBuild.map((item, index) => {
             const Icon = icons[index] || Code2;
             const palette = cardPalettes[index % cardPalettes.length];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, ArrowRight, Check, CheckCircle2, AlertCircle, ChevronDown,
+  ArrowLeft, ArrowRight, Check, AlertCircle, ChevronDown,
   Layout, Server, Smartphone, Brain, Cloud, Shield, Palette 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,6 +61,29 @@ const STEP_FIELDS = [
   ['whyJoin'],
   Object.keys(INITIAL), // review
 ];
+
+const PROD_API_ORIGIN = 'https://code-catalysts.vercel.app';
+const SUCCESS_REDIRECT_SECONDS = 10;
+
+const normalizeBaseUrl = (value) => (value ? value.replace(/\/$/, '') : '');
+
+function getApplyApiUrl() {
+  const configuredBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL?.trim());
+  if (configuredBaseUrl) {
+    return `${configuredBaseUrl}/api/apply`;
+  }
+
+  if (typeof window === 'undefined') {
+    return '/api/apply';
+  }
+
+  const { hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${PROD_API_ORIGIN}/api/apply`;
+  }
+
+  return '/api/apply';
+}
 
 /* ── Custom Select Component ── */
 const CustomSelect = ({ value, onChange, options, placeholder, baseStyle, icons = {} }) => {
@@ -217,6 +240,19 @@ const CustomSelect = ({ value, onChange, options, placeholder, baseStyle, icons 
 
 function validate(data) {
   const err = {};
+  const isValidHttpUrl = (value) => {
+    if (!value.trim()) {
+      return false;
+    }
+
+    try {
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   if (!data.name.trim()) err.name = 'Name is required.';
   if (!data.email.trim()) err.email = 'Email is required.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) err.email = 'Enter a valid email.';
@@ -224,7 +260,9 @@ function validate(data) {
   if (!data.college.trim()) err.college = 'College is required.';
   if (!data.branch.trim()) err.branch = 'Branch is required.';
   if (!data.github.trim()) err.github = 'GitHub link is required.';
+  else if (!isValidHttpUrl(data.github)) err.github = 'Enter a valid GitHub URL starting with http:// or https://.';
   if (!data.linkedin.trim()) err.linkedin = 'LinkedIn link is required.';
+  else if (!isValidHttpUrl(data.linkedin)) err.linkedin = 'Enter a valid LinkedIn URL starting with http:// or https://.';
   if (!data.domain) err.domain = 'Select your domain.';
   if (!data.techStack.trim()) err.techStack = 'Tech stack is required.';
   if (!data.whyJoin.trim()) err.whyJoin = 'Tell us why you want to join.';
@@ -232,7 +270,198 @@ function validate(data) {
   return err;
 }
 
+async function readApiResponse(res) {
+  const raw = await res.text();
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {
+      ok: false,
+      error: res.ok
+        ? 'The server returned an unreadable response. Please refresh and check whether the application was saved.'
+        : 'The server returned an unexpected response. Please try again.',
+    };
+  }
+}
+
 /* ── Apply Page ── */
+const SuccessModal = ({ countdown, onReturnHome }) => (
+  <AnimatePresence>
+    <motion.div
+      key="success-modal"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+        background: 'rgba(3, 10, 18, 0.72)',
+        backdropFilter: 'blur(18px)',
+      }}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="submission-success-title"
+        initial={{ opacity: 0, y: 24, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          width: 'min(100%, 460px)',
+          padding: '2rem 1.8rem 1.7rem',
+          borderRadius: '28px',
+          textAlign: 'center',
+          border: '1px solid rgba(110, 231, 183, 0.22)',
+          background: 'radial-gradient(circle at top, rgba(16, 185, 129, 0.18), rgba(7, 16, 28, 0.98) 55%)',
+          boxShadow: '0 28px 70px rgba(0, 0, 0, 0.42), 0 0 50px rgba(16, 185, 129, 0.12)',
+        }}
+      >
+        <div style={{ position: 'relative', width: '118px', height: '118px', margin: '0 auto 1.4rem' }}>
+          <motion.div
+            initial={{ scale: 0.55, opacity: 0 }}
+            animate={{ scale: 1.12, opacity: [0, 0.35, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              inset: '10px',
+              borderRadius: '50%',
+              border: '1px solid rgba(110, 231, 183, 0.28)',
+            }}
+          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 48%, transparent 72%)',
+              boxShadow: '0 0 45px rgba(16, 185, 129, 0.18)',
+            }}
+          />
+          <svg viewBox="0 0 120 120" style={{ width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
+            <circle
+              cx="60"
+              cy="60"
+              r="44"
+              fill="none"
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="4"
+            />
+            <motion.circle
+              cx="60"
+              cy="60"
+              r="44"
+              fill="none"
+              stroke="#6ee7b7"
+              strokeWidth="5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.85, ease: [0.2, 0.9, 0.2, 1] }}
+              style={{ rotate: '-90deg', transformOrigin: '50% 50%' }}
+            />
+            <motion.path
+              d="M40 61 L54 75 L81 47"
+              fill="none"
+              stroke="#d1fae5"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.45, ease: 'easeOut' }}
+            />
+          </svg>
+        </div>
+
+        <h2
+          id="submission-success-title"
+          style={{
+            marginBottom: '0.45rem',
+            color: '#f8fffb',
+            fontSize: 'clamp(1.7rem, 4vw, 2.15rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}
+        >
+          Submitted
+        </h2>
+
+        <p style={{ marginBottom: '0.55rem', color: 'rgba(221, 255, 239, 0.88)', fontSize: '0.98rem', lineHeight: 1.6 }}>
+          Your application has been received successfully.
+        </p>
+        <p style={{ marginBottom: '1.35rem', color: 'rgba(191, 246, 223, 0.7)', fontSize: '0.92rem', lineHeight: 1.6 }}>
+          We will reach out within 1-3 days and return you to the home page automatically.
+        </p>
+
+        <div style={{ display: 'grid', gap: '0.95rem' }}>
+          <motion.div
+            key={countdown}
+            initial={{ scale: 0.94, opacity: 0.65 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              display: 'inline-flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '0.6rem',
+              margin: '0 auto',
+              padding: '0.7rem 1rem',
+              borderRadius: '999px',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(110, 231, 183, 0.18)',
+              color: '#d1fae5',
+              fontSize: '0.92rem',
+              fontWeight: 600,
+            }}
+          >
+            <span>Closing in</span>
+            <span style={{
+              minWidth: '2.1rem',
+              padding: '0.22rem 0.45rem',
+              borderRadius: '999px',
+              background: 'rgba(110, 231, 183, 0.16)',
+              color: '#f0fdf4',
+            }}>
+              {countdown}s
+            </span>
+          </motion.div>
+
+          <button
+            type="button"
+            onClick={onReturnHome}
+            className="glass-btn glass-btn-primary"
+            style={{
+              justifyContent: 'center',
+              width: '100%',
+              padding: '0.78rem 1.2rem',
+              borderRadius: '999px',
+              fontSize: '0.92rem',
+            }}
+          >
+            Return to Home
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  </AnimatePresence>
+);
+
 const ApplyPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -243,9 +472,38 @@ const ApplyPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState('idle'); // idle | success | error
   const [statusMsg, setStatusMsg] = useState('');
+  const [successCountdown, setSuccessCountdown] = useState(SUCCESS_REDIRECT_SECONDS);
 
   const isLast = step === STEPS.length - 1;
   const active = STEPS[step];
+
+  useEffect(() => {
+    if (status !== 'success') {
+      return undefined;
+    }
+
+    setSuccessCountdown(SUCCESS_REDIRECT_SECONDS);
+
+    const countdownInterval = window.setInterval(() => {
+      setSuccessCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(countdownInterval);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    const redirectTimer = window.setTimeout(() => {
+      navigate('/');
+    }, SUCCESS_REDIRECT_SECONDS * 1000);
+
+    return () => {
+      window.clearInterval(countdownInterval);
+      window.clearTimeout(redirectTimer);
+    };
+  }, [navigate, status]);
 
   const setField = (key, val) => {
     setForm(p => ({ ...p, [key]: val }));
@@ -291,20 +549,27 @@ const ApplyPage = () => {
     setSubmitting(true); setStatus('idle'); setStatusMsg('');
     try {
       // Send the payload to our secure Vercel serverless function backend proxy
-      const res = await fetch('/api/apply', {
+      const res = await fetch(getApplyApiUrl(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         body: JSON.stringify(form)
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || `Submission failed (${res.status})`);
+
+      const data = await readApiResponse(res);
+
+      if (!res.ok || !data?.ok) {
+        if (res.status === 404) {
+          throw new Error('Submission endpoint not found. If you are testing locally, set VITE_API_BASE_URL or use the deployed site.');
+        }
+
+        throw new Error(data?.error || data?.message || `Submission failed (${res.status})`);
       }
 
       setStatus('success');
-      setStatusMsg('Application submitted! We will reach out within 1-3 days.');
+      setStatusMsg('');
     } catch (error) {
       setStatus('error');
       setStatusMsg(error.message || 'Submission failed. Please try again.');
@@ -597,17 +862,17 @@ const ApplyPage = () => {
             )}
 
             {/* status messages */}
-            {isLast && status !== 'idle' && (
+            {isLast && status === 'error' && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '0.8rem 1rem', borderRadius: '12px',
                 marginTop: '1rem',
-                background: status === 'success' ? 'rgba(52,211,153,.06)' : 'rgba(244,63,94,.06)',
-                border: `1px solid ${status === 'success' ? 'rgba(52,211,153,.25)' : 'rgba(244,63,94,.25)'}`,
-                color: status === 'success' ? '#6ee7b7' : '#fca5a5',
+                background: 'rgba(244,63,94,.06)',
+                border: '1px solid rgba(244,63,94,.25)',
+                color: '#fca5a5',
                 fontSize: '0.9rem', fontWeight: 500,
               }}>
-                {status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <AlertCircle size={16} />
                 {statusMsg}
               </div>
             )}
@@ -648,6 +913,13 @@ const ApplyPage = () => {
         </div>
       </div>
       </div>
+
+      {status === 'success' && (
+        <SuccessModal
+          countdown={successCountdown}
+          onReturnHome={() => navigate('/')}
+        />
+      )}
 
       <style>{`
         input:focus, textarea:focus, select:focus {
