@@ -5,6 +5,10 @@ import Hero from './components/Hero';
 import About from './components/About';
 import Join from './components/Join';
 import Preloader from './components/Preloader';
+import AdminLayout from './components/admin/AdminLayout';
+import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
+import { PublicContentProvider } from './context/PublicContentContext';
+import { AdminAuthProvider } from './context/AdminAuthContext';
 
 import { motion } from 'framer-motion';
 
@@ -14,6 +18,12 @@ const Team = lazy(() => import('./components/Team'));
 const Projects = lazy(() => import('./components/Projects'));
 const Journey = lazy(() => import('./components/Journey'));
 const ApplyPage = lazy(() => import('./pages/Apply'));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminMembersPage = lazy(() => import('./pages/admin/AdminMembersPage'));
+const AdminProjectsPage = lazy(() => import('./pages/admin/AdminProjectsPage'));
+const AdminJourneyPage = lazy(() => import('./pages/admin/AdminJourneyPage'));
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 const ANCHOR_INTENT_EVENT = 'codecatalysts:anchor-intent';
 
 function shouldSkipPreloader() {
@@ -177,59 +187,63 @@ const DeferredSection = ({
 
 function HomePage({ backgroundReady, contentReady }) {
   return (
-    <motion.div
-      variants={staggerContainer}
-      initial="hidden"
-      animate={contentReady ? 'visible' : 'hidden'}
-    >
-      {/* Background scales in first */}
+    <PublicContentProvider>
       <motion.div
+        variants={staggerContainer}
         initial="hidden"
-        animate={backgroundReady ? 'visible' : 'hidden'}
-        variants={scaleFade}
+        animate={contentReady ? 'visible' : 'hidden'}
       >
-        {backgroundReady ? (
-          <Suspense fallback={null}>
-            <ParallaxBG />
-          </Suspense>
+        {/* Background scales in first */}
+        <motion.div
+          initial="hidden"
+          animate={backgroundReady ? 'visible' : 'hidden'}
+          variants={scaleFade}
+        >
+          {backgroundReady ? (
+            <Suspense fallback={null}>
+              <ParallaxBG />
+            </Suspense>
+          ) : null}
+        </motion.div>
+
+        {contentReady ? (
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* Navbar slides down */}
+            <motion.div variants={slideDown}>
+              <Navbar />
+            </motion.div>
+
+            <main>
+              {/* Hero fades up */}
+              <motion.div variants={fadeUp}>
+                <Hero />
+              </motion.div>
+
+              <SectionWrapper delay={0.1}><About /></SectionWrapper>
+              <DeferredSection anchorId="team" minHeight={980}>
+                <Suspense fallback={<SectionFallback minHeight={980} />}>
+                  <SectionWrapper delay={0.1}><Team /></SectionWrapper>
+                </Suspense>
+              </DeferredSection>
+              <DeferredSection anchorId="projects" minHeight={560}>
+                <Suspense fallback={<SectionFallback minHeight={560} />}>
+                  <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
+                </Suspense>
+              </DeferredSection>
+              <DeferredSection anchorId="journey" minHeight={720}>
+                <Suspense fallback={<SectionFallback minHeight={720} />}>
+                  <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
+                </Suspense>
+              </DeferredSection>
+            </main>
+
+            <motion.div variants={fadeUp}>
+              <Join />
+            </motion.div>
+          </div>
         ) : null}
       </motion.div>
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Navbar slides down */}
-        <motion.div variants={slideDown}>
-          <Navbar />
-        </motion.div>
-
-        <main>
-          {/* Hero fades up */}
-          <motion.div variants={fadeUp}>
-            <Hero />
-          </motion.div>
-
-          <SectionWrapper delay={0.1}><About /></SectionWrapper>
-          <DeferredSection anchorId="team" minHeight={980}>
-            <Suspense fallback={<SectionFallback minHeight={980} />}>
-              <SectionWrapper delay={0.1}><Team /></SectionWrapper>
-            </Suspense>
-          </DeferredSection>
-          <DeferredSection anchorId="projects" minHeight={560}>
-            <Suspense fallback={<SectionFallback minHeight={560} />}>
-              <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
-            </Suspense>
-          </DeferredSection>
-          <DeferredSection anchorId="journey" minHeight={720}>
-            <Suspense fallback={<SectionFallback minHeight={720} />}>
-              <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
-            </Suspense>
-          </DeferredSection>
-        </main>
-
-        <motion.div variants={fadeUp}>
-          <Join />
-        </motion.div>
-      </div>
-    </motion.div>
+    </PublicContentProvider>
   );
 }
 
@@ -268,6 +282,67 @@ function App() {
               </Suspense>
             )}
           />
+          <Route
+            path="/admin/login"
+            element={(
+              <AdminAuthProvider>
+                <Suspense fallback={<RouteFallback />}>
+                  <AdminLoginPage />
+                </Suspense>
+              </AdminAuthProvider>
+            )}
+          />
+          <Route
+            path="/admin"
+            element={(
+              <AdminAuthProvider>
+                <ProtectedAdminRoute />
+              </AdminAuthProvider>
+            )}
+          >
+            <Route element={<AdminLayout />}>
+              <Route
+                index
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminDashboardPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="members"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminMembersPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="projects"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminProjectsPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="journey"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminJourneyPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="settings"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminSettingsPage />
+                  </Suspense>
+                )}
+              />
+            </Route>
+          </Route>
         </Routes>
       </BrowserRouter>
     </>

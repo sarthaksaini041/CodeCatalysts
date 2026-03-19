@@ -7,6 +7,11 @@ dist/
 api key.txt
 
 .vercel/
+.agent/
+.agents/
+.claude/
+.vscode/
+skills-lock.json
 .DS_Store
 Thumbs.db
 npm-debug.log*

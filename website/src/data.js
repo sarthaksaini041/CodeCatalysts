@@ -137,6 +137,8 @@ export const journeyTimeline = [
   }
 ];
 
+export const projectData = [];
+
 export const howWeBuild = [
   {
     title: "Idea to MVP",
@@ -159,3 +161,13 @@ export const howWeBuild = [
     description: "Clean UI and clear flows are built in from day one, not added later."
   }
 ];
+
+export const siteSettings = {
+  heroTitle: "Code Catalysts",
+  heroSubtitle: "Not experts yet - just people who love learning and creating.",
+  contactEmail: "team@codecatalysts.dev",
+  githubUrl: "",
+  linkedinUrl: "https://www.linkedin.com/company/code-catalysts000/",
+  instagramUrl: "https://www.instagram.com/codecatalysts",
+  footerText: "Copyright {year} Code Catalysts. Built by the team."
+};

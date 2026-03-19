@@ -26,9 +26,9 @@ const ParallaxBG = () => {
     let height = window.innerHeight;
 
     const getParticleCount = () => {
-      const density = coarsePointer ? 22000 : 14000;
-      const maxCount = coarsePointer ? 40 : 72;
-      const minCount = coarsePointer ? 18 : 28;
+      const density = coarsePointer ? 20000 : 13000;
+      const maxCount = coarsePointer ? 42 : 78;
+      const minCount = coarsePointer ? 20 : 30;
       return Math.max(minCount, Math.min(Math.floor((width * height) / density), maxCount));
     };
 

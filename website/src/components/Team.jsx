@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Github, Instagram, Linkedin, X } from 'lucide-react';
-import { teamData } from '../data';
+import { Github, Instagram, Linkedin, Twitter, X as CloseIcon } from 'lucide-react';
+import { usePublicContent } from '../context/PublicContentContext';
 
 /* ── Department accent colours ── */
 const deptColor = {
@@ -99,15 +99,62 @@ const SpotlightCard = memo(({ member, color, onClick }) => {
 });
 SpotlightCard.displayName = 'SpotlightCard';
 
-const TeamGrid = memo(({ onSelectMember }) => {
+const TeamGrid = memo(({ members, loading, onSelectMember }) => {
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="team-grid-container">
+          {[0, 1, 2, 3].map((index) => (
+            <div key={index} className="team-grid-item">
+              <div className="team-card-wrapper" aria-hidden="true">
+                <div className="team-card-inner" style={{ opacity: 0.65 }}>
+                  <div className="team-card-image" />
+                  <div className="team-card-body">
+                    <span className="team-role">Loading member</span>
+                    <h3 className="team-name">Fetching live content...</h3>
+                    <p className="team-skills">Please wait a moment.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!members.length) {
+    return (
+      <div className="container">
+        <div className="static-texture-card rough-gradient-card" style={{
+          '--card-bg-start': 'rgba(18, 28, 48, 0.92)',
+          '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
+          '--card-glow-a': 'rgba(0, 212, 255, 0.12)',
+          '--card-glow-b': 'rgba(167, 139, 250, 0.12)',
+          textAlign: 'center',
+          maxWidth: '760px',
+          margin: '0 auto',
+          padding: '2.2rem',
+        }}>
+          <h3 className="heading-md" style={{ marginBottom: '0.75rem' }}>
+            Team cards will show up here
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            No visible members are published yet. Add or unhide members from the admin portal to populate this section.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <div className="team-grid-container">
-        {teamData.map((member, i) => {
+        {members.map((member, i) => {
           const color = deptColor[member.department] || '#00f3ff';
           return (
             <motion.div
-              key={member.name}
+              key={member.id || member.name}
               className="team-grid-item"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -290,6 +337,9 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
     member.instagram && hasRealProfileUrl(member.instagram)
       ? { href: member.instagram, label: 'Instagram', icon: Instagram }
       : null,
+    member.twitter && hasRealProfileUrl(member.twitter)
+      ? { href: member.twitter, label: 'Twitter / X', icon: Twitter }
+      : null,
   ].filter(Boolean);
 
   return (
@@ -318,7 +368,7 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
           aria-label={`Close ${member.name}'s profile`}
           style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10, width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#888', cursor: 'pointer', transition: 'all .3s ease' }}
         >
-          <X size={18} />
+          <CloseIcon size={18} />
         </button>
 
         <div className="panel-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '420px' }}>
@@ -371,15 +421,27 @@ const MemberPanel = ({ member, allMembers, onClose, onSwitch }) => {
    TEAM SECTION — MAIN COMPONENT
    ═══════════════════════════════════════════ */
 const Team = () => {
+  const { members, loading } = usePublicContent();
   const [selectedMember, setSelectedMember] = useState(null);
-
-  useEffect(() => {
-    document.body.style.overflow = selectedMember ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [selectedMember]);
-
-  useEffect(() => {
+  const activeSelectedMember = useMemo(() => {
     if (!selectedMember) {
+      return null;
+    }
+
+    return members.find((member) => (
+      selectedMember.id
+        ? member.id === selectedMember.id
+        : member.name === selectedMember.name
+    )) || null;
+  }, [members, selectedMember]);
+
+  useEffect(() => {
+    document.body.style.overflow = activeSelectedMember ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [activeSelectedMember]);
+
+  useEffect(() => {
+    if (!activeSelectedMember) {
       return undefined;
     }
 
@@ -391,7 +453,7 @@ const Team = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedMember]);
+  }, [activeSelectedMember]);
 
   return (
     <section className="section cyber-team-section">
@@ -411,14 +473,14 @@ const Team = () => {
       </div>
 
       {/* ═══ CINEMATIC GRID ═══ */}
-      <TeamGrid onSelectMember={setSelectedMember} />
+      <TeamGrid members={members} loading={loading} onSelectMember={setSelectedMember} />
 
       {/* Modal */}
       <AnimatePresence>
-        {selectedMember && (
+        {activeSelectedMember && (
           <MemberPanel
-            member={selectedMember}
-            allMembers={teamData}
+            member={activeSelectedMember}
+            allMembers={members}
             onClose={() => setSelectedMember(null)}
             onSwitch={(m) => setSelectedMember(m)}
           />

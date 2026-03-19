@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Linkedin, Mail, Zap, ArrowUpRight, ChevronDown } from 'lucide-react';
+import { Github, Instagram, Linkedin, Mail, Zap, ArrowUpRight, ChevronDown } from 'lucide-react';
+import { usePublicContent } from '../context/PublicContentContext';
 
 const faqItems = [
   {
@@ -33,6 +34,22 @@ const faqItems = [
 const Join = () => {
   const [openFaq, setOpenFaq] = useState(0);
   const currentYear = new Date().getFullYear();
+  const { siteSettings } = usePublicContent();
+  const contactEmail = siteSettings.contactEmail || 'team@codecatalysts.dev';
+  const connectLinks = [
+    siteSettings.githubUrl
+      ? { icon: Github, href: siteSettings.githubUrl, label: 'GitHub' }
+      : null,
+    siteSettings.instagramUrl
+      ? { icon: Instagram, href: siteSettings.instagramUrl, label: 'Instagram' }
+      : null,
+    siteSettings.linkedinUrl
+      ? { icon: Linkedin, href: siteSettings.linkedinUrl, label: 'LinkedIn' }
+      : null,
+    { icon: Mail, href: `mailto:${contactEmail}`, label: 'Email' },
+  ].filter(Boolean);
+  const footerText = (siteSettings.footerText || 'Copyright {year} Code Catalysts. Built by the team.')
+    .replace('{year}', String(currentYear));
 
   return (
     <footer style={{
@@ -79,8 +96,8 @@ const Join = () => {
             <p className="join-cta-meta">
               Takes about 3 minutes. We get back within 1-3 days.<br />
               Or drop us a line at{' '}
-              <a href="mailto:team@codecatalysts.dev" className="join-cta-mail">
-                team@codecatalysts.dev
+              <a href={`mailto:${contactEmail}`} className="join-cta-mail">
+                {contactEmail}
               </a>
             </p>
           </div>
@@ -184,11 +201,7 @@ const Join = () => {
             <div className="footer-col">
               <h4 className="footer-heading" style={{ color: '#aab4c2' }}>Connect</h4>
               <div style={{ display: 'flex', gap: '0.6rem' }}>
-                {[
-                  { icon: Instagram, href: 'https://www.instagram.com/codecatalysts', label: 'Instagram' },
-                  { icon: Linkedin, href: 'https://www.linkedin.com/company/code-catalysts000/', label: 'LinkedIn' },
-                  { icon: Mail, href: 'mailto:team@codecatalysts.dev', label: 'Email' },
-                ].map(({ icon: Icon, href, label }) => (
+                {connectLinks.map(({ icon: Icon, href, label }) => (
                   <a key={label} href={href} target={label !== 'Email' ? '_blank' : undefined}
                     rel="noopener noreferrer" aria-label={label}
                     className="footer-social" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -206,7 +219,7 @@ const Join = () => {
             display: 'flex', justifyContent: 'center',
           }}>
             <p style={{ color: 'rgba(200,210,230,.8)', fontSize: '0.85rem', textAlign: 'center', fontWeight: 500 }}>
-              &copy; {currentYear} Code Catalysts. Built by the team.
+              {footerText}
             </p>
           </div>
         </div>

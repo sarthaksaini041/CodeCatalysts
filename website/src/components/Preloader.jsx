@@ -527,13 +527,42 @@ export default function Preloader({ onReveal, onComplete }) {
   const fgParts = useRef([]);
   const fontReady = useRef(false);
   const revealStarted = useRef(false);
+  const completedRef = useRef(false);
+  const mountedRef = useRef(false);
+  const previousBodyOverflowRef = useRef('');
+  const previousHtmlOverflowRef = useRef('');
+  const onRevealRef = useRef(onReveal);
+  const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
+    onRevealRef.current = onReveal;
+    onCompleteRef.current = onComplete;
+  }, [onReveal, onComplete]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    previousBodyOverflowRef.current = document.body.style.overflow;
+    previousHtmlOverflowRef.current = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
     const canvas = canvasRef.current;
-    if (!canvas) return undefined;
+    if (!canvas) {
+      return () => {
+        mountedRef.current = false;
+        document.body.style.overflow = previousBodyOverflowRef.current;
+        document.documentElement.style.overflow = previousHtmlOverflowRef.current;
+      };
+    }
+
     const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
-    if (!ctx) return undefined;
+    if (!ctx) {
+      return () => {
+        mountedRef.current = false;
+        document.body.style.overflow = previousBodyOverflowRef.current;
+        document.documentElement.style.overflow = previousHtmlOverflowRef.current;
+      };
+    }
 
     const setup = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -583,25 +612,36 @@ export default function Preloader({ onReveal, onComplete }) {
       } else {
         if (!revealStarted.current) {
           revealStarted.current = true;
-          onReveal?.();
+          onRevealRef.current?.();
         }
-        setVisible(false);
+
+        if (mountedRef.current) {
+          setVisible(false);
+        }
       }
     };
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      document.body.style.overflow = '';
+      mountedRef.current = false;
+      document.body.style.overflow = previousBodyOverflowRef.current;
+      document.documentElement.style.overflow = previousHtmlOverflowRef.current;
       window.removeEventListener('resize', setup);
       window.clearTimeout(fallbackTimer);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [onReveal]);
+  }, []);
 
   const handleExitComplete = useCallback(() => {
-    document.body.style.overflow = '';
-    onComplete?.();
-  }, [onComplete]);
+    if (completedRef.current) {
+      return;
+    }
+
+    completedRef.current = true;
+    document.body.style.overflow = previousBodyOverflowRef.current;
+    document.documentElement.style.overflow = previousHtmlOverflowRef.current;
+    onCompleteRef.current?.();
+  }, []);
 
   return (
     <AnimatePresence onExitComplete={handleExitComplete}>
