@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save } from 'lucide-react';
+import { ArrowUpRight, Save } from 'lucide-react';
 import AdminField from '../../components/admin/AdminField';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
@@ -15,7 +15,13 @@ function getInitialForm(settings = fallbackSettings) {
     github_url: settings.githubUrl || '',
     linkedin_url: settings.linkedinUrl || '',
     instagram_url: settings.instagramUrl || '',
+    twitter_url: settings.twitterUrl || '',
     footer_text: settings.footerText || '',
+    cta_button_text: settings.ctaButtonText || 'Join the Build Squad',
+    brand_primary_label: settings.brandLinks?.[0]?.label || '',
+    brand_primary_url: settings.brandLinks?.[0]?.url || '',
+    brand_secondary_label: settings.brandLinks?.[1]?.label || '',
+    brand_secondary_url: settings.brandLinks?.[1]?.url || '',
   };
 }
 
@@ -34,12 +40,31 @@ function validateSettings(form) {
     ['github_url', 'GitHub URL'],
     ['linkedin_url', 'LinkedIn URL'],
     ['instagram_url', 'Instagram URL'],
+    ['twitter_url', 'Twitter / X URL'],
+    ['brand_primary_url', 'Primary brand link URL'],
+    ['brand_secondary_url', 'Secondary brand link URL'],
   ];
 
   urlChecks.forEach(([key, label]) => {
     const message = validateOptionalUrl(form[key], label);
     if (message) {
       errors[key] = message;
+    }
+  });
+
+  [
+    ['brand_primary_label', 'brand_primary_url', 'Primary brand link'],
+    ['brand_secondary_label', 'brand_secondary_url', 'Secondary brand link'],
+  ].forEach(([labelKey, urlKey, fieldLabel]) => {
+    const hasLabel = form[labelKey].trim();
+    const hasUrl = form[urlKey].trim();
+
+    if (hasLabel && !hasUrl) {
+      errors[urlKey] = `${fieldLabel} needs a valid URL.`;
+    }
+
+    if (hasUrl && !hasLabel) {
+      errors[labelKey] = `${fieldLabel} needs a button label.`;
     }
   });
 
@@ -75,7 +100,19 @@ export default function AdminSettingsPage() {
           githubUrl: settings?.github_url || fallbackSettings.githubUrl,
           linkedinUrl: settings?.linkedin_url || fallbackSettings.linkedinUrl,
           instagramUrl: settings?.instagram_url || fallbackSettings.instagramUrl,
+          twitterUrl: settings?.twitter_url || fallbackSettings.twitterUrl,
           footerText: settings?.footer_text || fallbackSettings.footerText,
+          ctaButtonText: settings?.cta_button_text || fallbackSettings.ctaButtonText,
+          brandLinks: [
+            {
+              label: settings?.brand_primary_label || '',
+              url: settings?.brand_primary_url || '',
+            },
+            {
+              label: settings?.brand_secondary_label || '',
+              url: settings?.brand_secondary_url || '',
+            },
+          ].filter((item) => item.label && item.url),
         }));
       } catch (error) {
         if (isActive) {
@@ -127,7 +164,13 @@ export default function AdminSettingsPage() {
         github_url: normalizeOptionalUrl(form.github_url),
         linkedin_url: normalizeOptionalUrl(form.linkedin_url),
         instagram_url: normalizeOptionalUrl(form.instagram_url),
+        twitter_url: normalizeOptionalUrl(form.twitter_url),
         footer_text: form.footer_text.trim() || fallbackSettings.footerText,
+        cta_button_text: form.cta_button_text.trim() || fallbackSettings.ctaButtonText,
+        brand_primary_label: form.brand_primary_label.trim() || null,
+        brand_primary_url: normalizeOptionalUrl(form.brand_primary_url),
+        brand_secondary_label: form.brand_secondary_label.trim() || null,
+        brand_secondary_url: normalizeOptionalUrl(form.brand_secondary_url),
       });
 
       setStatusTone('info');
@@ -144,7 +187,18 @@ export default function AdminSettingsPage() {
     <div className="admin-page">
       <AdminPageHeader
         title="Site Settings"
-        description="Edit the hero copy and public contact/footer links that appear on the main website."
+        description="Manage hero copy, CTA text, footer text, and key brand links."
+        actions={(
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="admin-button admin-button-secondary"
+          >
+            <ArrowUpRight size={16} />
+            <span>Preview site</span>
+          </a>
+        )}
       />
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
@@ -160,12 +214,12 @@ export default function AdminSettingsPage() {
         <section className="admin-grid">
           <div className="admin-card">
             <div className="admin-card-body">
-              <div className="admin-card-header">
-                <div>
-                  <h2>Public copy and links</h2>
-                  <p>These values feed the hero section and footer on the public website.</p>
-                </div>
+            <div className="admin-card-header">
+              <div>
+                <h2>Public copy and links</h2>
+                <p>These values power the public hero and footer.</p>
               </div>
+            </div>
 
               <form className="admin-form" onSubmit={handleSubmit}>
                 <AdminField label="Hero title" htmlFor="hero_title" error={errors.hero_title}>
@@ -223,12 +277,34 @@ export default function AdminSettingsPage() {
                       onChange={(event) => setField('instagram_url', event.target.value)}
                     />
                   </AdminField>
+
+                  <AdminField label="Twitter / X URL" htmlFor="twitter_url" error={errors.twitter_url}>
+                    <input
+                      id="twitter_url"
+                      className="admin-input"
+                      value={form.twitter_url}
+                      onChange={(event) => setField('twitter_url', event.target.value)}
+                    />
+                  </AdminField>
                 </div>
+
+                <AdminField
+                  label="CTA button text"
+                  htmlFor="cta_button_text"
+                  description="Updates the join section button label."
+                >
+                  <input
+                    id="cta_button_text"
+                    className="admin-input"
+                    value={form.cta_button_text}
+                    onChange={(event) => setField('cta_button_text', event.target.value)}
+                  />
+                </AdminField>
 
                 <AdminField
                   label="Footer text"
                   htmlFor="footer_text"
-                  description="Use {year} if you want the current year to be inserted automatically."
+                  description="Use {year} to insert the current year automatically."
                 >
                   <input
                     id="footer_text"
@@ -238,9 +314,58 @@ export default function AdminSettingsPage() {
                   />
                 </AdminField>
 
+                <div className="admin-card admin-card-soft">
+                  <div className="admin-card-body">
+                    <div className="admin-card-header">
+                      <div>
+                        <h3>Brand links</h3>
+                        <p>Optional footer buttons for key destinations.</p>
+                      </div>
+                    </div>
+
+                    <div className="admin-form-grid">
+                      <AdminField label="Primary brand label" htmlFor="brand_primary_label" error={errors.brand_primary_label}>
+                        <input
+                          id="brand_primary_label"
+                          className="admin-input"
+                          value={form.brand_primary_label}
+                          onChange={(event) => setField('brand_primary_label', event.target.value)}
+                        />
+                      </AdminField>
+
+                      <AdminField label="Primary brand URL" htmlFor="brand_primary_url" error={errors.brand_primary_url}>
+                        <input
+                          id="brand_primary_url"
+                          className="admin-input"
+                          value={form.brand_primary_url}
+                          onChange={(event) => setField('brand_primary_url', event.target.value)}
+                        />
+                      </AdminField>
+
+                      <AdminField label="Secondary brand label" htmlFor="brand_secondary_label" error={errors.brand_secondary_label}>
+                        <input
+                          id="brand_secondary_label"
+                          className="admin-input"
+                          value={form.brand_secondary_label}
+                          onChange={(event) => setField('brand_secondary_label', event.target.value)}
+                        />
+                      </AdminField>
+
+                      <AdminField label="Secondary brand URL" htmlFor="brand_secondary_url" error={errors.brand_secondary_url}>
+                        <input
+                          id="brand_secondary_url"
+                          className="admin-input"
+                          value={form.brand_secondary_url}
+                          onChange={(event) => setField('brand_secondary_url', event.target.value)}
+                        />
+                      </AdminField>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="admin-form-actions">
                   <div className="admin-field-copy">
-                    Live preview: {footerPreview}
+                    Live preview: {footerPreview} | CTA: {form.cta_button_text || fallbackSettings.ctaButtonText}
                   </div>
                   <button type="submit" className="admin-button admin-button-primary" disabled={saving}>
                     <Save size={16} />
@@ -256,7 +381,7 @@ export default function AdminSettingsPage() {
               <div className="admin-card-header">
                 <div>
                   <h2>Preview notes</h2>
-                  <p>How these values are used on the current site.</p>
+                  <p>Where these values appear on the site.</p>
                 </div>
               </div>
 
@@ -264,19 +389,25 @@ export default function AdminSettingsPage() {
                 <div className="admin-record-card">
                   <div className="admin-record-title">Hero section</div>
                   <p className="admin-record-copy">
-                    `hero_title` and `hero_subtitle` feed the landing page headline and intro copy.
+                    Controls the main headline and supporting copy on the landing page.
                   </p>
                 </div>
                 <div className="admin-record-card">
                   <div className="admin-record-title">Footer contact links</div>
                   <p className="admin-record-copy">
-                    `contact_email`, `github_url`, `linkedin_url`, and `instagram_url` power the footer action links.
+                    Shows your contact email and social links in the footer.
+                  </p>
+                </div>
+                <div className="admin-record-card">
+                  <div className="admin-record-title">Join section CTA</div>
+                  <p className="admin-record-copy">
+                    Updates the main button label in the join section.
                   </p>
                 </div>
                 <div className="admin-record-card">
                   <div className="admin-record-title">Footer copyright</div>
                   <p className="admin-record-copy">
-                    `footer_text` is shown in the bottom bar. The {'{year}'} token is replaced automatically on render.
+                    Appears in the bottom bar. The {`{year}`} placeholder updates automatically.
                   </p>
                 </div>
               </div>

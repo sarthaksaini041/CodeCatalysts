@@ -24,7 +24,11 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage')
 const AdminMembersPage = lazy(() => import('./pages/admin/AdminMembersPage'));
 const AdminProjectsPage = lazy(() => import('./pages/admin/AdminProjectsPage'));
 const AdminJourneyPage = lazy(() => import('./pages/admin/AdminJourneyPage'));
+const AdminFaqPage = lazy(() => import('./pages/admin/AdminFaqPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
+const AdminMediaPage = lazy(() => import('./pages/admin/AdminMediaPage'));
+const AdminActivityPage = lazy(() => import('./pages/admin/AdminActivityPage'));
+const AdminAccountPage = lazy(() => import('./pages/admin/AdminAccountPage'));
 const ANCHOR_INTENT_EVENT = 'codecatalysts:anchor-intent';
 
 function shouldSkipPreloader() {
@@ -336,10 +340,42 @@ function App() {
                 )}
               />
               <Route
+                path="faqs"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminFaqPage />
+                  </Suspense>
+                )}
+              />
+              <Route
                 path="settings"
                 element={(
                   <Suspense fallback={<RouteFallback />}>
                     <AdminSettingsPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="media"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminMediaPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="activity"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminActivityPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="account"
+                element={(
+                  <Suspense fallback={<RouteFallback />}>
+                    <AdminAccountPage />
                   </Suspense>
                 )}
               />

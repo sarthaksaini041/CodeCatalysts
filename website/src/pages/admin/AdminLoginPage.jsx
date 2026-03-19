@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { LockKeyhole, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, LogIn } from 'lucide-react';
 import AdminField from '../../components/admin/AdminField';
 import AdminNotice from '../../components/admin/AdminNotice';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -11,6 +11,7 @@ export default function AdminLoginPage() {
   const { signIn, isAdmin, isLoading, error: authError } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,15 +71,27 @@ export default function AdminLoginPage() {
               </AdminField>
 
               <AdminField label="Password" htmlFor="admin-password">
-                <input
-                  id="admin-password"
-                  type="password"
-                  className="admin-input"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Your admin password"
-                />
+                <div className="admin-password-field">
+                  <input
+                    id="admin-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="admin-input admin-password-input"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Your admin password"
+                  />
+                  <button
+                    type="button"
+                    className="admin-password-toggle"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </AdminField>
 
               <div className="admin-form-actions">

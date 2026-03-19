@@ -9,6 +9,26 @@ const ALLOWED_IMAGE_TYPES = new Set([
 ]);
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MEDIA_PREFIXES = ['members', 'projects', 'site-assets'];
+const STATIC_SITE_MEDIA_PATHS = ['site-assets/favicon.ico', 'site-assets/icon.png'];
+const IMAGE_PATH_PATTERN = /\.(avif|gif|ico|jpe?g|png|svg|webp)$/i;
+
+function isStorageFolderEntry(item) {
+  return !item?.id;
+}
+
+function isSupportedMediaEntry(path, contentType) {
+  if (String(contentType || '').toLowerCase().startsWith('image/')) {
+    return true;
+  }
+
+  return IMAGE_PATH_PATTERN.test(String(path || ''));
+}
+
+function getMediaCollection(path) {
+  const [collection = 'library'] = String(path || '').split('/');
+  return collection;
+}
 
 function getFileExtension(file) {
   const [, extension = 'jpg'] = String(file.name || '').split(/\.(?=[^.]+$)/);
@@ -84,4 +104,84 @@ export async function deleteContentImage(path) {
   if (error) {
     throw error;
   }
+}
+
+async function listMediaPrefix(prefix) {
+  const client = requireSupabaseBrowserClient();
+  const { data, error } = await client.storage.from(storageBucket).list(prefix, {
+    limit: 200,
+    sortBy: { column: 'name', order: 'asc' },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const nestedItems = await Promise.all((data || []).map(async (item) => {
+    const path = prefix ? `${prefix}/${item.name}` : item.name;
+
+    if (isStorageFolderEntry(item)) {
+      return listMediaPrefix(path);
+    }
+
+    if (!isSupportedMediaEntry(path, item.metadata?.mimetype)) {
+      return [];
+    }
+
+    const { data: publicUrlData } = client.storage.from(storageBucket).getPublicUrl(path);
+
+    return [{
+      id: item.id,
+      name: item.name,
+      path,
+      publicUrl: publicUrlData.publicUrl,
+      createdAt: item.created_at || '',
+      updatedAt: item.updated_at || item.created_at || '',
+      size: item.metadata?.size || 0,
+      contentType: item.metadata?.mimetype || '',
+      collection: getMediaCollection(path),
+    }];
+  }));
+
+  return nestedItems.flat();
+}
+
+export async function listContentMedia() {
+  const collections = await Promise.all(
+    MEDIA_PREFIXES.map((prefix) => listMediaPrefix(prefix)),
+  );
+
+  return Array.from(
+    collections
+      .flat()
+      .reduce((lookup, item) => lookup.set(item.path, item), new Map())
+      .values(),
+  )
+    .sort((left, right) => {
+      const timeDifference = new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
+      if (timeDifference !== 0) {
+        return timeDifference;
+      }
+
+      return left.path.localeCompare(right.path);
+    });
+}
+
+export async function getReferencedContentImagePaths() {
+  const client = requireSupabaseBrowserClient();
+  const [membersResult, projectsResult] = await Promise.all([
+    client.from('members').select('image_path'),
+    client.from('projects').select('image_path'),
+  ]);
+
+  const firstError = [membersResult.error, projectsResult.error].find(Boolean);
+  if (firstError) {
+    throw firstError;
+  }
+
+  return Array.from(new Set([
+    ...(membersResult.data || []).map((item) => item.image_path).filter(Boolean),
+    ...(projectsResult.data || []).map((item) => item.image_path).filter(Boolean),
+    ...STATIC_SITE_MEDIA_PATHS,
+  ]));
 }

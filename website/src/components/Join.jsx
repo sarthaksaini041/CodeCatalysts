@@ -1,41 +1,37 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Github, Instagram, Linkedin, Mail, Zap, ArrowUpRight, ChevronDown } from 'lucide-react';
+import { Github, Instagram, Linkedin, Mail, Twitter, Zap, ArrowUpRight, ChevronDown } from 'lucide-react';
 import { usePublicContent } from '../context/PublicContentContext';
 
-const faqItems = [
-  {
-    question: 'Who can apply to Code Catalysts?',
-    answer:
-      'Anyone who is curious, consistent, and excited to build. We care more about your energy, willingness to learn, and ability to collaborate than having a perfect resume.',
-  },
-  {
-    question: 'Do I need to be highly experienced already?',
-    answer:
-      'No. Strong fundamentals help, but we also welcome learners who show initiative through projects, experiments, design work, writing, or thoughtful problem-solving.',
-  },
-  {
-    question: 'How much time should I expect to commit?',
-    answer:
-      'The expectation is reasonable and student-friendly. We look for steady contribution and communication rather than unrealistic weekly hours.',
-  },
-  {
-    question: 'What happens after I submit the application?',
-    answer:
-      'We review your application, reach out if there is a fit, and usually follow up within 1 to 3 days. Some applicants may be asked for a short conversation or project discussion.',
-  },
-  {
-    question: 'What kinds of roles can I grow into here?',
-    answer:
-      'Depending on your strengths, you can contribute across development, design, product thinking, AI/ML, content, research, and team initiatives. Growth here is hands-on and collaborative.',
-  },
-];
+function renderAccentTitle(title) {
+  const words = String(title || '').trim().split(/\s+/).filter(Boolean);
+
+  if (!words.length) {
+    return null;
+  }
+
+  if (words.length === 1) {
+    return <span className="join-cta-highlight">{words[0]}</span>;
+  }
+
+  return (
+    <>
+      {words.slice(0, -1).join(' ')}{' '}
+      <span className="join-cta-highlight">{words[words.length - 1]}</span>
+    </>
+  );
+}
 
 const Join = () => {
-  const [openFaq, setOpenFaq] = useState(0);
+  const [openFaq, setOpenFaq] = useState({});
   const currentYear = new Date().getFullYear();
-  const { siteSettings } = usePublicContent();
+  const { siteSettings, sectionList } = usePublicContent();
   const contactEmail = siteSettings.contactEmail || 'team@codecatalysts.dev';
+  const brandLinks = Array.isArray(siteSettings.brandLinks) ? siteSettings.brandLinks : [];
+  const ctaButtonText = siteSettings.ctaButtonText || 'Join the Build Squad';
+  const faqSection = sectionList.find((section) => section.sectionKey === 'faq')
+    || sectionList.find((section) => section.layoutType === 'faq')
+    || null;
   const connectLinks = [
     siteSettings.githubUrl
       ? { icon: Github, href: siteSettings.githubUrl, label: 'GitHub' }
@@ -45,6 +41,9 @@ const Join = () => {
       : null,
     siteSettings.linkedinUrl
       ? { icon: Linkedin, href: siteSettings.linkedinUrl, label: 'LinkedIn' }
+      : null,
+    siteSettings.twitterUrl
+      ? { icon: Twitter, href: siteSettings.twitterUrl, label: 'Twitter / X' }
       : null,
     { icon: Mail, href: `mailto:${contactEmail}`, label: 'Email' },
   ].filter(Boolean);
@@ -87,7 +86,7 @@ const Join = () => {
             </p>
 
             <Link to="/apply" className="join-cta-button">
-              <span className="join-cta-button-label">Join the Build Squad</span>
+              <span className="join-cta-button-label">{ctaButtonText}</span>
               <span className="join-cta-button-arrow">
                 <ArrowUpRight size={16} />
               </span>
@@ -103,49 +102,70 @@ const Join = () => {
           </div>
         </div>
 
-        <section id="faq" className="join-faq-section" aria-labelledby="join-faq-title">
-          <div className="join-faq-shell">
-            <div className="join-faq-head">
-              <span className="join-faq-kicker">FAQ</span>
-              <h3 id="join-faq-title" className="join-faq-title">
-                Questions Before You <span className="join-cta-highlight">Apply</span>
-              </h3>
-              <p className="join-faq-copy">
-                A few quick answers about joining the team, the application flow, and what
-                we look for.
-              </p>
-            </div>
+        {faqSection ? (() => {
+          const section = faqSection;
+          const visibleItems = Array.isArray(section.items)
+            ? section.items.filter((item) => item?.isVisible !== false)
+            : [];
+          const openIndex = typeof openFaq[section.sectionKey] === 'number'
+            ? openFaq[section.sectionKey]
+            : 0;
 
-            <div className="join-faq-list">
-              {faqItems.map((item, index) => {
-                const isOpen = openFaq === index;
-                return (
-                  <article key={item.question} className={`join-faq-item ${isOpen ? 'is-open' : ''}`}>
-                    <button
-                      type="button"
-                      className="join-faq-trigger"
-                      onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                      aria-expanded={isOpen}
-                      aria-controls={`join-faq-panel-${index}`}
-                    >
-                      <span>{item.question}</span>
-                      <span className="join-faq-icon" aria-hidden="true">
-                        <ChevronDown size={18} />
-                      </span>
-                    </button>
-                    <div
-                      id={`join-faq-panel-${index}`}
-                      className="join-faq-answer-wrap"
-                      hidden={!isOpen}
-                    >
-                      <p className="join-faq-answer">{item.answer}</p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+          return (
+            <section
+              key={section.id || section.sectionKey}
+              id={section.anchorId || section.sectionKey}
+              className="join-faq-section"
+              aria-labelledby={`${section.sectionKey}-title`}
+            >
+              <div className="join-faq-shell">
+                <div className="join-faq-head">
+                  <span className="join-faq-kicker">{section.kicker || section.label || 'FAQ'}</span>
+                  <h3 id={`${section.sectionKey}-title`} className="join-faq-title">
+                    {renderAccentTitle(section.title || section.label)}
+                  </h3>
+                  {section.description ? (
+                    <p className="join-faq-copy">
+                      {section.description}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="join-faq-list">
+                  {visibleItems.map((item, index) => {
+                    const isOpen = openIndex === index;
+                    return (
+                      <article key={item.id || item.title} className={`join-faq-item ${isOpen ? 'is-open' : ''}`}>
+                        <button
+                          type="button"
+                          className="join-faq-trigger"
+                          onClick={() => setOpenFaq((current) => ({
+                            ...current,
+                            [section.sectionKey]: isOpen ? -1 : index,
+                          }))}
+                          aria-expanded={isOpen}
+                          aria-controls={`${section.sectionKey}-panel-${index}`}
+                        >
+                          <span>{item.title}</span>
+                          <span className="join-faq-icon" aria-hidden="true">
+                            <ChevronDown size={18} />
+                          </span>
+                        </button>
+                        <div
+                          id={`${section.sectionKey}-panel-${index}`}
+                          className="join-faq-answer-wrap"
+                          hidden={!isOpen}
+                        >
+                          <p className="join-faq-answer">{item.description}</p>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          );
+        })() : null}
       </div>
 
       <div style={{ 
@@ -185,6 +205,21 @@ const Join = () => {
               <p style={{ color: 'rgba(230,240,250,.9)', fontSize: '0.85rem', lineHeight: 1.6, maxWidth: '260px', fontWeight: 500 }}>
                 Building, learning, and shipping together since 2025.
               </p>
+              {brandLinks.length ? (
+                <div className="footer-brand-links">
+                  {brandLinks.map((item) => (
+                    <a
+                      key={`${item.label}-${item.url}`}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="footer-brand-link"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             {/* col 2: quick links */}
@@ -472,7 +507,7 @@ const Join = () => {
         }
         .join-faq-list {
           display: grid;
-          gap: 0.9rem;
+          gap: 0.6rem;
         }
         .join-faq-item {
           border-radius: 20px;
@@ -491,13 +526,14 @@ const Join = () => {
           align-items: center;
           justify-content: space-between;
           gap: 1rem;
-          padding: 1.1rem 1.2rem;
+          padding: 0.95rem 1.1rem;
           border: 0;
           background: transparent;
           color: #eef5ff;
           font-family: 'Space Grotesk', sans-serif;
           font-size: 1rem;
           font-weight: 600;
+          line-height: 1.45;
           text-align: left;
           cursor: pointer;
         }
@@ -520,7 +556,7 @@ const Join = () => {
           border-color: rgba(99, 126, 255, 0.18);
         }
         .join-faq-answer-wrap {
-          padding: 0 1.2rem 1.2rem;
+          padding: 0 1.1rem 0.95rem;
         }
         .join-faq-answer {
           max-width: 64ch;
@@ -541,10 +577,36 @@ const Join = () => {
           }
           .footer-col { align-items: center; }
           .footer-col p { margin: 0 auto; }
+          .footer-brand-links { justify-content: center; }
         }
         .footer-col {
           display: flex;
           flex-direction: column;
+        }
+        .footer-brand-links {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.55rem;
+          margin-top: 1rem;
+        }
+        .footer-brand-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 36px;
+          padding: 0 0.9rem;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,.12);
+          background: rgba(255,255,255,.05);
+          color: rgba(230,240,250,.88);
+          font-size: 0.82rem;
+          font-weight: 600;
+          transition: all 0.25s ease;
+        }
+        .footer-brand-link:hover {
+          color: #fff;
+          border-color: rgba(0,212,255,.22);
+          background: rgba(0,212,255,.08);
         }
         .footer-heading {
           font-size: 0.75rem;
@@ -617,11 +679,11 @@ const Join = () => {
             padding: 1.2rem;
           }
           .join-faq-trigger {
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             font-size: 0.95rem;
           }
           .join-faq-answer-wrap {
-            padding: 0 1rem 1rem;
+            padding: 0 1rem 0.9rem;
           }
           .join-cta-button {
             width: 100%;

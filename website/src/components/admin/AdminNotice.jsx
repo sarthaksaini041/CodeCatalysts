@@ -7,7 +7,8 @@ export default function AdminNotice({ tone = 'info', children }) {
 
   return (
     <div className={className}>
-      {children}
+      <span className="admin-notice-dot" aria-hidden="true" />
+      <span>{children}</span>
     </div>
   );
 }

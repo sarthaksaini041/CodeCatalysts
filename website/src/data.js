@@ -162,6 +162,34 @@ export const howWeBuild = [
   }
 ];
 
+export const faqItems = [
+  {
+    question: "Who can apply to Code Catalysts?",
+    answer:
+      "Anyone who is curious, consistent, and excited to build. We care more about your energy, willingness to learn, and ability to collaborate than having a perfect resume."
+  },
+  {
+    question: "Do I need to be highly experienced already?",
+    answer:
+      "No. Strong fundamentals help, but we also welcome learners who show initiative through projects, experiments, design work, writing, or thoughtful problem-solving."
+  },
+  {
+    question: "How much time should I expect to commit?",
+    answer:
+      "The expectation is reasonable and student-friendly. We look for steady contribution and communication rather than unrealistic weekly hours."
+  },
+  {
+    question: "What happens after I submit the application?",
+    answer:
+      "We review your application, reach out if there is a fit, and usually follow up within 1 to 3 days. Some applicants may be asked for a short conversation or project discussion."
+  },
+  {
+    question: "What kinds of roles can I grow into here?",
+    answer:
+      "Depending on your strengths, you can contribute across development, design, product thinking, AI/ML, content, research, and team initiatives. Growth here is hands-on and collaborative."
+  }
+];
+
 export const siteSettings = {
   heroTitle: "Code Catalysts",
   heroSubtitle: "Not experts yet - just people who love learning and creating.",
@@ -169,5 +197,8 @@ export const siteSettings = {
   githubUrl: "",
   linkedinUrl: "https://www.linkedin.com/company/code-catalysts000/",
   instagramUrl: "https://www.instagram.com/codecatalysts",
-  footerText: "Copyright {year} Code Catalysts. Built by the team."
+  twitterUrl: "",
+  footerText: "Copyright {year} Code Catalysts. Built by the team.",
+  ctaButtonText: "Join the Build Squad",
+  brandLinks: []
 };

@@ -31,3 +31,22 @@ cd CodeCatalysts
 npm install
 npm run dev
 ```
+
+## Supabase Setup
+
+The admin portal expects the SQL files in `supabase/migrations` to be applied to your connected Supabase project before you open `/admin`.
+
+Run the migrations in filename order in the Supabase SQL Editor or with the Supabase CLI. This includes:
+
+- `supabase/migrations/20260319_admin_portal.sql`
+- `supabase/migrations/20260319_admin_portal_extensions.sql`
+- `supabase/migrations/20260319_admin_portal_hardening.sql`
+- `supabase/migrations/20260319_site_sections.sql`
+
+If `public.site_sections` has not been created yet, the FAQ/sections admin screen will stay unavailable until `20260319_site_sections.sql` is applied.
+
+If you want the legacy website images from `assets/` to appear in `/admin/media` and be stored in Supabase like newer admin uploads, run:
+
+```bash
+npm run sync:site-media
+```

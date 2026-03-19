@@ -1,7 +1,38 @@
 import { requireSupabaseBrowserClient } from '../lib/supabase';
 
+const TABLE_MIGRATION_HINTS = {
+  admin_users: 'supabase/migrations/20260319_admin_portal.sql',
+  members: 'supabase/migrations/20260319_admin_portal.sql',
+  projects: 'supabase/migrations/20260319_admin_portal.sql',
+  journey_entries: 'supabase/migrations/20260319_admin_portal.sql',
+  site_settings: 'supabase/migrations/20260319_admin_portal.sql',
+  site_sections: 'supabase/migrations/20260319_site_sections.sql',
+};
+
 function getClient() {
   return requireSupabaseBrowserClient();
+}
+
+function isMissingTableError(error, table) {
+  const message = error?.message || '';
+  return message.includes(`'public.${table}'`) && message.includes('schema cache');
+}
+
+function normalizeTableError(table, error) {
+  if (!isMissingTableError(error, table)) {
+    return error;
+  }
+
+  const migrationPath = TABLE_MIGRATION_HINTS[table];
+  const normalizedError = new Error(
+    migrationPath
+      ? `The Supabase table "${table}" is not available in the connected project yet. Apply "${migrationPath}" and reload the admin portal.`
+      : `The Supabase table "${table}" is not available in the connected project yet. Apply the required database migration and reload the admin portal.`,
+  );
+
+  normalizedError.code = error?.code;
+  normalizedError.cause = error;
+  return normalizedError;
 }
 
 async function listOrdered(table) {
@@ -13,7 +44,7 @@ async function listOrdered(table) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    throw error;
+    throw normalizeTableError(table, error);
   }
 
   return data || [];
@@ -28,7 +59,7 @@ async function createRecord(table, payload) {
     .single();
 
   if (error) {
-    throw error;
+    throw normalizeTableError(table, error);
   }
 
   return data;
@@ -44,7 +75,7 @@ async function updateRecord(table, id, payload) {
     .single();
 
   if (error) {
-    throw error;
+    throw normalizeTableError(table, error);
   }
 
   return data;
@@ -55,7 +86,7 @@ async function removeRecord(table, id) {
   const { error } = await client.from(table).delete().eq('id', id);
 
   if (error) {
-    throw error;
+    throw normalizeTableError(table, error);
   }
 }
 
@@ -74,7 +105,7 @@ async function persistDisplayOrder(table, orderedItems) {
   const { error } = await client.from(table).upsert(updates, { onConflict: 'id' });
 
   if (error) {
-    throw error;
+    throw normalizeTableError(table, error);
   }
 }
 
@@ -112,7 +143,7 @@ export const siteSettingsAdminService = {
       .maybeSingle();
 
     if (error) {
-      throw error;
+      throw normalizeTableError('site_settings', error);
     }
 
     return data;
@@ -126,9 +157,17 @@ export const siteSettingsAdminService = {
       .single();
 
     if (error) {
-      throw error;
+      throw normalizeTableError('site_settings', error);
     }
 
     return data;
   },
+};
+
+export const siteSectionsAdminService = {
+  list: () => listOrdered('site_sections'),
+  create: (payload) => createRecord('site_sections', payload),
+  update: (id, payload) => updateRecord('site_sections', id, payload),
+  remove: (id) => removeRecord('site_sections', id),
+  reorder: (orderedItems) => persistDisplayOrder('site_sections', orderedItems),
 };

@@ -39,6 +39,37 @@ export async function signOutAdmin() {
   }
 }
 
+export async function updateAdminPassword(password) {
+  const client = requireSupabaseBrowserClient();
+  const { data, error } = await client.auth.updateUser({ password });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.user;
+}
+
+export async function updateAdminProfile({ displayName, username }) {
+  const client = requireSupabaseBrowserClient();
+  const { data, error } = await client.auth.updateUser({
+    data: {
+      display_name: displayName || null,
+      full_name: displayName || null,
+      name: displayName || null,
+      username: username || null,
+      user_name: username || null,
+      preferred_username: username || null,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.user;
+}
+
 export async function checkAdminAccess(userId) {
   if (!userId || !hasSupabaseBrowserConfig) {
     return false;

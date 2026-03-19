@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
+  ArrowUpRight,
   Edit3,
   Plus,
   Save,
@@ -16,6 +17,7 @@ import ImageUploadField from '../../components/admin/ImageUploadField';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { projectsAdminService } from '../../services/adminContentService';
 import { deleteContentImage, uploadContentImage, validateImageFile } from '../../services/storageService';
 import {
@@ -42,6 +44,7 @@ const EMPTY_PROJECT_FORM = {
   image_url: '',
   image_path: '',
 };
+const PROJECT_STATUS_OPTIONS = ['', 'In Progress', 'Completed'];
 
 function mapProjectToForm(project) {
   return {
@@ -104,8 +107,15 @@ export default function AdminProjectsPage() {
     removeItem,
     reorderItems,
   } = useAdminCollection(projectsAdminService);
+  const {
+    items: mediaItems,
+    loading: mediaLoading,
+    error: mediaError,
+    loadMedia,
+  } = useAdminMediaLibrary();
   const [form, setForm] = useState(EMPTY_PROJECT_FORM);
   const [editingProjectId, setEditingProjectId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [imageError, setImageError] = useState('');
@@ -123,10 +133,22 @@ export default function AdminProjectsPage() {
   const resetForm = () => {
     setForm(EMPTY_PROJECT_FORM);
     setEditingProjectId(null);
+    setIsEditorOpen(false);
     setFormErrors({});
     setImageFile(null);
     setImageError('');
     setSlugTouched(false);
+  };
+
+  const startCreateProject = () => {
+    setForm(EMPTY_PROJECT_FORM);
+    setEditingProjectId(null);
+    setIsEditorOpen(true);
+    setFormErrors({});
+    setImageFile(null);
+    setImageError('');
+    setSlugTouched(false);
+    setStatusMessage('');
   };
 
   const setField = (key, value) => {
@@ -147,6 +169,7 @@ export default function AdminProjectsPage() {
 
   const handleEdit = (project) => {
     setEditingProjectId(project.id);
+    setIsEditorOpen(true);
     setForm(mapProjectToForm(project));
     setImageFile(null);
     setImageError('');
@@ -168,6 +191,19 @@ export default function AdminProjectsPage() {
     setField('image_url', '');
     setField('image_path', '');
   };
+
+  const handleSelectExistingImage = (item) => {
+    setImageFile(null);
+    setImageError('');
+    setField('image_url', item.publicUrl);
+    setField('image_path', item.path);
+  };
+
+  const statusOptions = useMemo(() => (
+    PROJECT_STATUS_OPTIONS.includes(form.status)
+      ? PROJECT_STATUS_OPTIONS
+      : [...PROJECT_STATUS_OPTIONS, form.status]
+  ), [form.status]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -229,6 +265,7 @@ export default function AdminProjectsPage() {
       setStatusTone('info');
       resetForm();
       await loadItems();
+      await loadMedia();
     } catch (saveError) {
       setStatusTone('error');
       setStatusMessage(saveError.message || 'Unable to save this project.');
@@ -254,6 +291,7 @@ export default function AdminProjectsPage() {
 
       setStatusTone('info');
       setStatusMessage('Project deleted successfully.');
+      await loadMedia();
     } catch (deleteError) {
       setStatusTone('error');
       setStatusMessage(deleteError.message || 'Unable to delete this project.');
@@ -289,24 +327,40 @@ export default function AdminProjectsPage() {
     <div className="admin-page">
       <AdminPageHeader
         title="Projects"
-        description="Publish project cards with images, tech stack, links, featured flags, and live visibility controls."
+        description="Manage project cards, status, links, visibility, and featured placement."
         actions={(
-          <button type="button" className="admin-button admin-button-primary" onClick={resetForm}>
-            <Plus size={16} />
-            <span>New project</span>
-          </button>
+          <>
+            <a
+              href="/#projects"
+              target="_blank"
+              rel="noreferrer"
+              className="admin-button admin-button-secondary"
+            >
+              <ArrowUpRight size={16} />
+              <span>Preview projects</span>
+            </a>
+            <button
+              type="button"
+              className="admin-button admin-button-primary admin-button-icon"
+              onClick={startCreateProject}
+              aria-label="Create project"
+              title="Create project"
+            >
+              <Plus size={18} />
+            </button>
+          </>
         )}
       />
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
 
-      <section className="admin-grid">
+      <section className={`admin-grid${isEditorOpen ? '' : ' admin-grid-single'}`}>
         <div className="admin-card">
           <div className="admin-card-body">
             <div className="admin-card-header">
               <div>
                 <h2>Current projects</h2>
-                <p>These rows control the projects section on the public website.</p>
+                <p>Manage the cards shown in the public projects section.</p>
               </div>
             </div>
 
@@ -320,7 +374,7 @@ export default function AdminProjectsPage() {
             ) : error ? (
               <AdminNotice tone="error">{error}</AdminNotice>
             ) : projects.length === 0 ? (
-              <AdminNotice tone="empty">No projects yet. Add the first project card from the form on the right.</AdminNotice>
+              <AdminNotice tone="empty">No projects yet. Use the + button to add the first card.</AdminNotice>
             ) : (
               <div className="admin-record-list">
                 {projects.map((project, index) => (
@@ -341,8 +395,8 @@ export default function AdminProjectsPage() {
                           <div className="admin-record-title">{project.title}</div>
                           <p className="admin-record-subtitle">
                             {project.slug}
-                            {project.category ? ` • ${project.category}` : ''}
-                            {project.status ? ` • ${project.status}` : ''}
+                            {project.category ? ` - ${project.category}` : ''}
+                            {project.status ? ` - ${project.status}` : ''}
                           </p>
                           <p className="admin-record-copy" style={{ marginTop: '0.5rem' }}>
                             {project.short_description}
@@ -369,25 +423,47 @@ export default function AdminProjectsPage() {
                       checked={project.is_visible}
                       onChange={(nextValue) => handleToggleVisibility(project, nextValue)}
                       label={project.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                      hint="Hide a project while keeping it in the admin portal."
+                      hint="Hide without deleting."
                     />
 
                     <div className="admin-actions">
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'up')} disabled={index === 0}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-up"
+                        onClick={() => handleMove(index, 'up')}
+                        disabled={index === 0}
+                        aria-label={`Move ${project.title} up`}
+                        title={`Move ${project.title} up`}
+                      >
                         <ArrowUp size={16} />
-                        <span>Up</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'down')} disabled={index === projects.length - 1}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-down"
+                        onClick={() => handleMove(index, 'down')}
+                        disabled={index === projects.length - 1}
+                        aria-label={`Move ${project.title} down`}
+                        title={`Move ${project.title} down`}
+                      >
                         <ArrowDown size={16} />
-                        <span>Down</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleEdit(project)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-edit"
+                        onClick={() => handleEdit(project)}
+                        aria-label={`Edit ${project.title}`}
+                        title={`Edit ${project.title}`}
+                      >
                         <Edit3 size={16} />
-                        <span>Edit</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-danger" onClick={() => setPendingDelete(project)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-danger admin-button-icon"
+                        onClick={() => setPendingDelete(project)}
+                        aria-label={`Delete ${project.title}`}
+                        title={`Delete ${project.title}`}
+                      >
                         <Trash2 size={16} />
-                        <span>Delete</span>
                       </button>
                     </div>
                   </article>
@@ -397,14 +473,15 @@ export default function AdminProjectsPage() {
           </div>
         </div>
 
+        {isEditorOpen ? (
         <div className="admin-card">
-          <div className="admin-card-body">
-            <div className="admin-card-header">
-              <div>
-                <h2>{editingProject ? 'Edit project' : 'Add project'}</h2>
-                <p>{editingProject ? 'Update the selected project card.' : 'Create a new public project card.'}</p>
+            <div className="admin-card-body">
+              <div className="admin-card-header">
+                <div>
+                  <h2>Project editor</h2>
+                  <p>{editingProject ? 'Update this project.' : 'Create a new project card.'}</p>
+                </div>
               </div>
-            </div>
 
             <form className="admin-form" onSubmit={handleSubmit}>
               <div className="admin-form-grid">
@@ -439,12 +516,18 @@ export default function AdminProjectsPage() {
                 </AdminField>
 
                 <AdminField label="Status" htmlFor="project_status">
-                  <input
+                  <select
                     id="project_status"
-                    className="admin-input"
+                    className="admin-select"
                     value={form.status}
                     onChange={(event) => setField('status', event.target.value)}
-                  />
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option || 'unset'} value={option}>
+                        {option || 'Select status'}
+                      </option>
+                    ))}
+                  </select>
                 </AdminField>
               </div>
 
@@ -469,7 +552,7 @@ export default function AdminProjectsPage() {
               <AdminField
                 label="Tech stack"
                 htmlFor="project_tech_stack"
-                description="Separate stack items with commas or new lines."
+                description="Separate items with commas or new lines."
               >
                 <textarea
                   id="project_tech_stack"
@@ -504,28 +587,32 @@ export default function AdminProjectsPage() {
                 currentUrl={form.image_url}
                 file={imageFile}
                 error={formErrors.image}
-                helpText="Use an image that still looks good when cropped to a card layout."
+                helpText="Use an image that crops well in a card layout."
+                existingMedia={mediaItems}
+                loadingMedia={mediaLoading}
+                mediaError={mediaError}
                 onFileChange={handleFileChange}
                 onClearSelection={clearSelectedImage}
+                onSelectExisting={handleSelectExistingImage}
               />
 
               <ToggleSwitch
                 checked={form.featured}
                 onChange={(nextValue) => setField('featured', nextValue)}
                 label={form.featured ? 'Featured project' : 'Not featured'}
-                hint="Featured items are visually highlighted on the public site."
+                hint="Highlights this project on the site."
               />
 
               <ToggleSwitch
                 checked={form.is_visible}
                 onChange={(nextValue) => setField('is_visible', nextValue)}
                 label={form.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                hint="Hide the card without removing the record."
+                hint="Hide without deleting."
               />
 
               <div className="admin-form-actions">
                 <button type="button" className="admin-button admin-button-ghost" onClick={resetForm}>
-                  {editingProject ? 'Cancel edit' : 'Clear form'}
+                  {editingProject ? 'Cancel edit' : 'Cancel'}
                 </button>
                 <button type="submit" className="admin-button admin-button-primary" disabled={saving}>
                   <Save size={16} />
@@ -535,6 +622,7 @@ export default function AdminProjectsPage() {
             </form>
           </div>
         </div>
+        ) : null}
       </section>
 
       <ConfirmDialog
@@ -548,3 +636,5 @@ export default function AdminProjectsPage() {
     </div>
   );
 }
+
+

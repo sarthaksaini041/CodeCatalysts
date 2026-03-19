@@ -1,66 +1,42 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
 import { journeyTimeline, projectData, siteSettings, teamData } from '../website/src/data.js';
 import { slugify } from '../website/src/utils/content.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(__dirname, '../.env');
-
-function loadDotEnvFile() {
-  if (!fs.existsSync(envPath)) {
-    return;
-  }
-
-  const contents = fs.readFileSync(envPath, 'utf8');
-
-  contents.split(/\r?\n/).forEach((line) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      return;
-    }
-
-    const separatorIndex = trimmed.indexOf('=');
-    if (separatorIndex === -1) {
-      return;
-    }
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const rawValue = trimmed.slice(separatorIndex + 1).trim();
-
-    if (!key || process.env[key]) {
-      return;
-    }
-
-    process.env[key] = rawValue.replace(/^['"]|['"]$/g, '');
-  });
-}
+import {
+  createSupabaseServiceClient,
+  loadDotEnvFile,
+  resolvePublicAssetReference,
+  uploadSiteAssets,
+} from './lib/siteMediaSync.mjs';
 
 loadDotEnvFile();
+const { supabase, bucket } = createSupabaseServiceClient();
+let siteAssetMap = new Map();
 
-const supabaseUrl = process.env.SUPABASE_URL?.trim();
-const supabaseKey = (
-  process.env.SUPABASE_SECRET_KEY
-  || process.env.SUPABASE_SERVICE_ROLE_KEY
-  || ''
-).trim();
+function resolveSeedImage(imageUrl) {
+  const asset = resolvePublicAssetReference(siteAssetMap, imageUrl);
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY).');
-  process.exit(1);
+  if (!asset) {
+    return {
+      image_url: imageUrl || null,
+      image_path: null,
+    };
+  }
+
+  return {
+    image_url: asset.publicUrl,
+    image_path: asset.storagePath,
+  };
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 function mapMember(member, index) {
+  const image = resolveSeedImage(member.image);
+
   return {
     name: member.name,
     role: member.role,
     department: member.department,
     short_bio: member.bio || '',
-    image_url: member.image || null,
-    image_path: null,
+    image_url: image.image_url,
+    image_path: image.image_path,
     email: null,
     github_url: member.github || null,
     linkedin_url: member.linkedin || null,
@@ -73,13 +49,15 @@ function mapMember(member, index) {
 }
 
 function mapProject(project, index) {
+  const image = resolveSeedImage(project.image || project.image_url);
+
   return {
     title: project.title,
     slug: project.slug || slugify(project.title),
     short_description: project.shortDescription || project.short_description || '',
     full_description: project.fullDescription || project.full_description || null,
-    image_url: project.image || project.image_url || null,
-    image_path: null,
+    image_url: image.image_url,
+    image_path: image.image_path,
     tech_stack: Array.isArray(project.techStack || project.tech_stack)
       ? (project.techStack || project.tech_stack)
       : [],
@@ -158,6 +136,8 @@ async function upsertSettings() {
 }
 
 async function main() {
+  const { assetMap } = await uploadSiteAssets(supabase, { bucket });
+  siteAssetMap = assetMap;
   await seedTableIfEmpty('members', teamData.map(mapMember));
   await seedTableIfEmpty('projects', projectData.map(mapProject));
   await seedTableIfEmpty('journey_entries', journeyTimeline.map(mapJourney));

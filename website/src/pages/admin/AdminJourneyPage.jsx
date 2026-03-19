@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
+  ArrowUpRight,
   Edit3,
   Milestone,
   Plus,
@@ -67,6 +68,7 @@ export default function AdminJourneyPage() {
   } = useAdminCollection(journeyAdminService);
   const [form, setForm] = useState(EMPTY_JOURNEY_FORM);
   const [editingId, setEditingId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState('info');
@@ -81,7 +83,16 @@ export default function AdminJourneyPage() {
   const resetForm = () => {
     setForm(EMPTY_JOURNEY_FORM);
     setEditingId(null);
+    setIsEditorOpen(false);
     setFormErrors({});
+  };
+
+  const startCreateEntry = () => {
+    setForm(EMPTY_JOURNEY_FORM);
+    setEditingId(null);
+    setIsEditorOpen(true);
+    setFormErrors({});
+    setStatusMessage('');
   };
 
   const setField = (key, value) => {
@@ -92,6 +103,7 @@ export default function AdminJourneyPage() {
 
   const handleEdit = (item) => {
     setEditingId(item.id);
+    setIsEditorOpen(true);
     setForm(mapJourneyToForm(item));
     setFormErrors({});
     setStatusMessage('');
@@ -185,24 +197,40 @@ export default function AdminJourneyPage() {
     <div className="admin-page">
       <AdminPageHeader
         title="Journey"
-        description="Control the public timeline entries, their visibility, and the order they appear in."
+        description="Manage timeline entries, visibility, and display order."
         actions={(
-          <button type="button" className="admin-button admin-button-primary" onClick={resetForm}>
-            <Plus size={16} />
-            <span>New entry</span>
-          </button>
+          <>
+            <a
+              href="/#journey"
+              target="_blank"
+              rel="noreferrer"
+              className="admin-button admin-button-secondary"
+            >
+              <ArrowUpRight size={16} />
+              <span>Preview journey</span>
+            </a>
+            <button
+              type="button"
+              className="admin-button admin-button-primary admin-button-icon"
+              onClick={startCreateEntry}
+              aria-label="Create journey entry"
+              title="Create journey entry"
+            >
+              <Plus size={18} />
+            </button>
+          </>
         )}
       />
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
 
-      <section className="admin-grid">
+      <section className={`admin-grid${isEditorOpen ? '' : ' admin-grid-single'}`}>
         <div className="admin-card">
           <div className="admin-card-body">
             <div className="admin-card-header">
               <div>
                 <h2>Current timeline</h2>
-                <p>These entries feed the public journey section in display order.</p>
+                <p>These entries appear in the public journey section.</p>
               </div>
             </div>
 
@@ -216,7 +244,7 @@ export default function AdminJourneyPage() {
             ) : error ? (
               <AdminNotice tone="error">{error}</AdminNotice>
             ) : items.length === 0 ? (
-              <AdminNotice tone="empty">No journey entries yet. Add the first milestone from the form on the right.</AdminNotice>
+              <AdminNotice tone="empty">No journey entries yet. Use the + button to add the first milestone.</AdminNotice>
             ) : (
               <div className="admin-record-list">
                 {items.map((item, index) => (
@@ -248,25 +276,47 @@ export default function AdminJourneyPage() {
                       checked={item.is_visible}
                       onChange={(nextValue) => handleToggleVisibility(item, nextValue)}
                       label={item.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                      hint="Hide an entry without deleting it."
+                      hint="Hide without deleting."
                     />
 
                     <div className="admin-actions">
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'up')} disabled={index === 0}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-up"
+                        onClick={() => handleMove(index, 'up')}
+                        disabled={index === 0}
+                        aria-label={`Move ${item.title} up`}
+                        title={`Move ${item.title} up`}
+                      >
                         <ArrowUp size={16} />
-                        <span>Up</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'down')} disabled={index === items.length - 1}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-down"
+                        onClick={() => handleMove(index, 'down')}
+                        disabled={index === items.length - 1}
+                        aria-label={`Move ${item.title} down`}
+                        title={`Move ${item.title} down`}
+                      >
                         <ArrowDown size={16} />
-                        <span>Down</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleEdit(item)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-edit"
+                        onClick={() => handleEdit(item)}
+                        aria-label={`Edit ${item.title}`}
+                        title={`Edit ${item.title}`}
+                      >
                         <Edit3 size={16} />
-                        <span>Edit</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-danger" onClick={() => setPendingDelete(item)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-danger admin-button-icon"
+                        onClick={() => setPendingDelete(item)}
+                        aria-label={`Delete ${item.title}`}
+                        title={`Delete ${item.title}`}
+                      >
                         <Trash2 size={16} />
-                        <span>Delete</span>
                       </button>
                     </div>
                   </article>
@@ -276,14 +326,15 @@ export default function AdminJourneyPage() {
           </div>
         </div>
 
+        {isEditorOpen ? (
         <div className="admin-card">
-          <div className="admin-card-body">
-            <div className="admin-card-header">
-              <div>
-                <h2>{editingItem ? 'Edit entry' : 'Add entry'}</h2>
-                <p>{editingItem ? 'Update the selected milestone.' : 'Create a new public milestone.'}</p>
+            <div className="admin-card-body">
+              <div className="admin-card-header">
+                <div>
+                  <h2>Journey editor</h2>
+                  <p>{editingItem ? 'Update this entry.' : 'Create a new timeline entry.'}</p>
+                </div>
               </div>
-            </div>
 
             <form className="admin-form" onSubmit={handleSubmit}>
               <AdminField label="Title" htmlFor="journey_title" error={formErrors.title}>
@@ -317,7 +368,7 @@ export default function AdminJourneyPage() {
               <AdminField
                 label="Icon name"
                 htmlFor="journey_icon_name"
-                description="Optional internal note for a future icon system."
+                description="Optional internal label."
               >
                 <input
                   id="journey_icon_name"
@@ -331,12 +382,12 @@ export default function AdminJourneyPage() {
                 checked={form.is_visible}
                 onChange={(nextValue) => setField('is_visible', nextValue)}
                 label={form.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                hint="Draft or archive a milestone without deleting it."
+                hint="Save as draft or archive without deleting."
               />
 
               <div className="admin-form-actions">
                 <button type="button" className="admin-button admin-button-ghost" onClick={resetForm}>
-                  {editingItem ? 'Cancel edit' : 'Clear form'}
+                  {editingItem ? 'Cancel edit' : 'Cancel'}
                 </button>
                 <button type="submit" className="admin-button admin-button-primary" disabled={saving}>
                   <Save size={16} />
@@ -346,6 +397,7 @@ export default function AdminJourneyPage() {
             </form>
           </div>
         </div>
+        ) : null}
       </section>
 
       <ConfirmDialog

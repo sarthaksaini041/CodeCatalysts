@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
+  ArrowUpRight,
   Edit3,
   Plus,
   Save,
@@ -16,6 +17,7 @@ import ImageUploadField from '../../components/admin/ImageUploadField';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { membersAdminService } from '../../services/adminContentService';
 import { deleteContentImage, uploadContentImage, validateImageFile } from '../../services/storageService';
 import {
@@ -113,8 +115,15 @@ export default function AdminMembersPage() {
     removeItem,
     reorderItems,
   } = useAdminCollection(membersAdminService);
+  const {
+    items: mediaItems,
+    loading: mediaLoading,
+    error: mediaError,
+    loadMedia,
+  } = useAdminMediaLibrary();
   const [form, setForm] = useState(EMPTY_MEMBER_FORM);
   const [editingMemberId, setEditingMemberId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [imageError, setImageError] = useState('');
@@ -131,9 +140,20 @@ export default function AdminMembersPage() {
   const resetForm = () => {
     setForm(EMPTY_MEMBER_FORM);
     setEditingMemberId(null);
+    setIsEditorOpen(false);
     setFormErrors({});
     setImageFile(null);
     setImageError('');
+  };
+
+  const startCreateMember = () => {
+    setForm(EMPTY_MEMBER_FORM);
+    setEditingMemberId(null);
+    setIsEditorOpen(true);
+    setFormErrors({});
+    setImageFile(null);
+    setImageError('');
+    setStatusMessage('');
   };
 
   const setField = (key, value) => {
@@ -144,6 +164,7 @@ export default function AdminMembersPage() {
 
   const handleEdit = (member) => {
     setEditingMemberId(member.id);
+    setIsEditorOpen(true);
     setForm(mapMemberToForm(member));
     setFormErrors({});
     setImageFile(null);
@@ -163,6 +184,13 @@ export default function AdminMembersPage() {
     setImageError('');
     setField('image_url', '');
     setField('image_path', '');
+  };
+
+  const handleSelectExistingImage = (item) => {
+    setImageFile(null);
+    setImageError('');
+    setField('image_url', item.publicUrl);
+    setField('image_path', item.path);
   };
 
   const handleSubmit = async (event) => {
@@ -225,6 +253,7 @@ export default function AdminMembersPage() {
       setStatusTone('info');
       resetForm();
       await loadItems();
+      await loadMedia();
     } catch (saveError) {
       setStatusTone('error');
       setStatusMessage(saveError.message || 'Unable to save this member.');
@@ -250,6 +279,7 @@ export default function AdminMembersPage() {
 
       setStatusTone('info');
       setStatusMessage('Member deleted successfully.');
+      await loadMedia();
     } catch (deleteError) {
       setStatusTone('error');
       setStatusMessage(deleteError.message || 'Unable to delete this member.');
@@ -284,25 +314,41 @@ export default function AdminMembersPage() {
   return (
     <div className="admin-page">
       <AdminPageHeader
-        title="Members"
-        description="Manage the team cards shown on the public website, including image uploads, visibility, and ordering."
+        title="Team"
+        description="Manage team profiles, images, visibility, order, and social links."
         actions={(
-          <button type="button" className="admin-button admin-button-primary" onClick={resetForm}>
-            <Plus size={16} />
-            <span>New member</span>
-          </button>
+          <>
+            <a
+              href="/#team"
+              target="_blank"
+              rel="noreferrer"
+              className="admin-button admin-button-secondary"
+            >
+              <ArrowUpRight size={16} />
+              <span>Preview team</span>
+            </a>
+            <button
+              type="button"
+              className="admin-button admin-button-primary admin-button-icon"
+              onClick={startCreateMember}
+              aria-label="Create member"
+              title="Create member"
+            >
+              <Plus size={18} />
+            </button>
+          </>
         )}
       />
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
 
-      <section className="admin-grid">
+      <section className={`admin-grid${isEditorOpen ? '' : ' admin-grid-single'}`}>
         <div className="admin-card">
           <div className="admin-card-body">
             <div className="admin-card-header">
               <div>
                 <h2>Current members</h2>
-                <p>Use the arrow buttons to persist the display order used on the public site.</p>
+                <p>Reorder cards to match the public site.</p>
               </div>
             </div>
 
@@ -316,7 +362,7 @@ export default function AdminMembersPage() {
             ) : error ? (
               <AdminNotice tone="error">{error}</AdminNotice>
             ) : members.length === 0 ? (
-              <AdminNotice tone="empty">No members yet. Add the first team card from the form on the right.</AdminNotice>
+              <AdminNotice tone="empty">No team members yet. Use the + button to add the first profile.</AdminNotice>
             ) : (
               <div className="admin-record-list">
                 {members.map((member, index) => (
@@ -336,7 +382,7 @@ export default function AdminMembersPage() {
                         <div>
                           <div className="admin-record-title">{member.name}</div>
                           <p className="admin-record-subtitle">
-                            {member.role} {member.department ? `• ${member.department}` : ''}
+                            {member.role} {member.department ? `- ${member.department}` : ''}
                           </p>
                           {member.short_bio ? (
                             <p className="admin-record-copy" style={{ marginTop: '0.5rem' }}>
@@ -364,25 +410,47 @@ export default function AdminMembersPage() {
                       checked={member.is_visible}
                       onChange={(nextValue) => handleToggleVisibility(member, nextValue)}
                       label={member.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                      hint="You can hide a card without deleting it."
+                      hint="Hide without deleting."
                     />
 
                     <div className="admin-actions">
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'up')} disabled={index === 0}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-up"
+                        onClick={() => handleMove(index, 'up')}
+                        disabled={index === 0}
+                        aria-label={`Move ${member.name} up`}
+                        title={`Move ${member.name} up`}
+                      >
                         <ArrowUp size={16} />
-                        <span>Up</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleMove(index, 'down')} disabled={index === members.length - 1}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-move-down"
+                        onClick={() => handleMove(index, 'down')}
+                        disabled={index === members.length - 1}
+                        aria-label={`Move ${member.name} down`}
+                        title={`Move ${member.name} down`}
+                      >
                         <ArrowDown size={16} />
-                        <span>Down</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-secondary" onClick={() => handleEdit(member)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-icon admin-button-edit"
+                        onClick={() => handleEdit(member)}
+                        aria-label={`Edit ${member.name}`}
+                        title={`Edit ${member.name}`}
+                      >
                         <Edit3 size={16} />
-                        <span>Edit</span>
                       </button>
-                      <button type="button" className="admin-button admin-button-danger" onClick={() => setPendingDelete(member)}>
+                      <button
+                        type="button"
+                        className="admin-button admin-button-danger admin-button-icon"
+                        onClick={() => setPendingDelete(member)}
+                        aria-label={`Delete ${member.name}`}
+                        title={`Delete ${member.name}`}
+                      >
                         <Trash2 size={16} />
-                        <span>Delete</span>
                       </button>
                     </div>
                   </article>
@@ -392,14 +460,15 @@ export default function AdminMembersPage() {
           </div>
         </div>
 
+        {isEditorOpen ? (
         <div className="admin-card">
-          <div className="admin-card-body">
-            <div className="admin-card-header">
-              <div>
-                <h2>{editingMember ? 'Edit member' : 'Add member'}</h2>
-                <p>{editingMember ? 'Update the selected card.' : 'Create a new team card for the public site.'}</p>
+            <div className="admin-card-body">
+              <div className="admin-card-header">
+                <div>
+                  <h2>Member editor</h2>
+                  <p>{editingMember ? 'Update this profile.' : 'Create a new team profile.'}</p>
+                </div>
               </div>
-            </div>
 
             <form className="admin-form" onSubmit={handleSubmit}>
               <div className="admin-form-grid">
@@ -453,7 +522,7 @@ export default function AdminMembersPage() {
               <AdminField
                 label="Skills"
                 htmlFor="member_skills"
-                description="Separate skills with commas or new lines."
+                description="Separate items with commas or new lines."
               >
                 <textarea
                   id="member_skills"
@@ -506,21 +575,25 @@ export default function AdminMembersPage() {
                 currentUrl={form.image_url}
                 file={imageFile}
                 error={formErrors.image}
-                helpText="Uploaded images are stored in Supabase Storage and used directly on the public website."
+                helpText="Uploads are stored in the shared media library."
+                existingMedia={mediaItems}
+                loadingMedia={mediaLoading}
+                mediaError={mediaError}
                 onFileChange={handleFileChange}
                 onClearSelection={clearSelectedImage}
+                onSelectExisting={handleSelectExistingImage}
               />
 
               <ToggleSwitch
                 checked={form.is_visible}
                 onChange={(nextValue) => setField('is_visible', nextValue)}
                 label={form.is_visible ? 'Visible on the website' : 'Hidden from the website'}
-                hint="This lets you draft or archive a card without deleting it."
+                hint="Save as draft or archive without deleting."
               />
 
               <div className="admin-form-actions">
                 <button type="button" className="admin-button admin-button-ghost" onClick={resetForm}>
-                  {editingMember ? 'Cancel edit' : 'Clear form'}
+                  {editingMember ? 'Cancel edit' : 'Cancel'}
                 </button>
                 <button type="submit" className="admin-button admin-button-primary" disabled={saving}>
                   <Save size={16} />
@@ -530,6 +603,7 @@ export default function AdminMembersPage() {
             </form>
           </div>
         </div>
+        ) : null}
       </section>
 
       <ConfirmDialog
@@ -543,3 +617,5 @@ export default function AdminMembersPage() {
     </div>
   );
 }
+
+
