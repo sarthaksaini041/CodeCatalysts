@@ -1,13 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-const supabaseKey = (
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY
-  || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-  || ''
-).trim();
+function normalizeEnvValue(value) {
+  const trimmed = String(value || '').trim();
 
-export const storageBucket = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET?.trim() || 'content-media';
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    || (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+}
+
+const supabaseUrl = normalizeEnvValue(import.meta.env.VITE_SUPABASE_URL);
+const supabaseKey = (
+  normalizeEnvValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY)
+  || normalizeEnvValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+  || ''
+);
+
+export const storageBucket = normalizeEnvValue(import.meta.env.VITE_SUPABASE_STORAGE_BUCKET) || 'content-media';
 export const hasSupabaseBrowserConfig = Boolean(supabaseUrl && supabaseKey);
 
 export const supabase = hasSupabaseBrowserConfig

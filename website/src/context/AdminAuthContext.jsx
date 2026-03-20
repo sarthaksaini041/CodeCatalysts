@@ -17,6 +17,22 @@ import { hasSupabaseBrowserConfig, supabase } from '../lib/supabase';
 
 const missingConfigMessage = 'Supabase browser configuration is missing for admin access.';
 
+function getNormalizedAdminAuthErrorMessage(error) {
+  const message = String(error?.message || '').trim();
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized === 'failed to fetch'
+    || normalized.includes('networkerror')
+    || normalized.includes('network request failed')
+    || normalized.includes('load failed')
+  ) {
+    return 'Cannot reach Supabase from this deployment. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY in Vercel Production (no quotes), then redeploy.';
+  }
+
+  return message || 'Unable to verify the admin session.';
+}
+
 const AdminAuthContext = createContext({
   session: null,
   user: null,
@@ -78,7 +94,7 @@ export function AdminAuthProvider({ children }) {
           user: null,
           isAdmin: false,
           isLoading: false,
-          error: error.message || 'Unable to verify the admin session.',
+          error: getNormalizedAdminAuthErrorMessage(error),
         });
       });
     }
@@ -106,8 +122,18 @@ export function AdminAuthProvider({ children }) {
         throw new Error(missingConfigMessage);
       }
 
-      await signInWithPassword(email, password);
-      const adminState = await getCurrentAdminState();
+      try {
+        await signInWithPassword(email, password);
+      } catch (error) {
+        throw new Error(getNormalizedAdminAuthErrorMessage(error));
+      }
+
+      let adminState;
+      try {
+        adminState = await getCurrentAdminState();
+      } catch (error) {
+        throw new Error(getNormalizedAdminAuthErrorMessage(error));
+      }
 
       if (!adminState.isAdmin) {
         await signOutAdmin();
