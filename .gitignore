@@ -1,20 +1,45 @@
 node_modules/
 dist/
+coverage/
+.cache/
+.temp/
+tmp/
 
 .env
 .env.*
 !.env.example
 api key.txt
+*.local
+*.secret
 
 .vercel/
 .agent/
 .agents/
 .claude/
 .vscode/
+.idea/
+.history/
 skills-lock.json
 .DS_Store
 Thumbs.db
+*.tmp
+*.swp
+*.swo
+*.bak
+*.orig
+*.pid
+*.seed
+*.out
+*.err
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
+
+# Tool caches
+.eslintcache
+.stylelintcache
+
+# OS metadata
+Desktop.ini
