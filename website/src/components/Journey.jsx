@@ -7,7 +7,7 @@ const Journey = () => {
   return (
     <section className="section" style={{ background: 'transparent' }}>
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <div className="section-intro-shell" style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <div className="kicker-badge">
               Journey
@@ -16,7 +16,7 @@ const Journey = () => {
           <h2 className="heading-lg" style={{ marginBottom: '1rem' }}>
             Moments that <span className="text-gradient">shaped</span> us
           </h2>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
+          <p className="section-intro-copy" style={{ maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
             A quick timeline of the wins and milestones behind Code Catalysts.
           </p>
         </div>

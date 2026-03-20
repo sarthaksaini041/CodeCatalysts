@@ -57,14 +57,14 @@ const About = () => {
     return (
       <section id="about" className="section" style={{ background: 'transparent' }}>
         <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <div className="section-intro-shell" style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
               <div className="kicker-badge">About Us</div>
             </div>
             <h2 className="heading-lg" style={{ marginBottom: '1rem' }}>
               Loading <span className="text-gradient">sections</span>
             </h2>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
+            <p className="section-intro-copy" style={{ maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
               Pulling your managed sections from Supabase.
             </p>
           </div>
@@ -101,7 +101,7 @@ const About = () => {
           style={{ background: 'transparent' }}
         >
           <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-            <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <div className="section-intro-shell" style={{ textAlign: 'center', marginBottom: '4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
                 <div className="kicker-badge">
                   {section.kicker || section.label || 'Section'}
@@ -111,7 +111,7 @@ const About = () => {
                 {renderAccentTitle(section.title || section.label)}
               </h2>
               {section.description ? (
-                <p style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
+                <p className="section-intro-copy" style={{ maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
                   {section.description}
                 </p>
               ) : null}

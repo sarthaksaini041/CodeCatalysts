@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { showAdminToast } from '../../lib/adminToast';
 import { journeyAdminService } from '../../services/adminContentService';
 import { normalizeNullableString } from '../../utils/content';
 
@@ -137,6 +138,10 @@ export default function AdminJourneyPage() {
       } else {
         await createItem(payload);
         setStatusMessage('Journey entry created successfully.');
+        showAdminToast({
+          title: 'New journey entry created',
+          message: `${payload.title} was added successfully.`,
+        });
       }
 
       setStatusTone('info');

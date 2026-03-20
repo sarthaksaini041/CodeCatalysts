@@ -19,6 +19,7 @@ import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
 import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { membersAdminService } from '../../services/adminContentService';
+import { showAdminToast } from '../../lib/adminToast';
 import { deleteContentImage, uploadContentImage, validateImageFile } from '../../services/storageService';
 import {
   formatListInput,
@@ -248,6 +249,10 @@ export default function AdminMembersPage() {
       } else {
         await createItem(payload);
         setStatusMessage('Member created successfully.');
+        showAdminToast({
+          title: 'New member created',
+          message: `${payload.name} was added successfully.`,
+        });
       }
 
       setStatusTone('info');

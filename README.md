@@ -32,9 +32,30 @@ npm install
 npm run dev
 ```
 
+## Applications Page Wiring
+
+The `/apply` page submits to `/api/apply`.
+
+- In production on Vercel, this is handled by `api/apply.js`.
+- In local development (`npm run dev`), Vite proxies `/api/*` to `VITE_DEV_API_TARGET`.
+	- If `VITE_DEV_API_TARGET` is not set, it falls back to `VITE_API_BASE_URL`, then `https://code-catalysts.vercel.app`.
+
+### Required server env for applications API
+
+Set these in Vercel (and in your local `vercel env` setup if running serverless locally):
+
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`)
+
+Optional:
+
+- `APPLY_ALLOWED_ORIGINS` (comma-separated extra origins)
+- `VITE_API_BASE_URL` (frontend API base override)
+- `VITE_DEV_API_TARGET` (local dev proxy target for `/api`)
+
 ## Supabase Setup
 
-The admin portal expects the SQL files in `supabase/migrations` to be applied to your connected Supabase project before you open `/admin`.
+The admin portal expects the SQL files in `supabase/migrations` to be applied to your connected Supabase project before you open `/admin-portal`.
 
 Run the migrations in filename order in the Supabase SQL Editor or with the Supabase CLI. This includes:
 
@@ -45,7 +66,7 @@ Run the migrations in filename order in the Supabase SQL Editor or with the Supa
 
 If `public.site_sections` has not been created yet, the FAQ/sections admin screen will stay unavailable until `20260319_site_sections.sql` is applied.
 
-If you want the legacy website images from `assets/` to appear in `/admin/media` and be stored in Supabase like newer admin uploads, run:
+If you want the legacy website images from `assets/` to appear in `/admin-portal/media` and be stored in Supabase like newer admin uploads, run:
 
 ```bash
 npm run sync:site-media

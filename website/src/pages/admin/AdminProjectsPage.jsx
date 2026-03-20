@@ -19,6 +19,7 @@ import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
 import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { projectsAdminService } from '../../services/adminContentService';
+import { showAdminToast } from '../../lib/adminToast';
 import { deleteContentImage, uploadContentImage, validateImageFile } from '../../services/storageService';
 import {
   formatListInput,
@@ -260,6 +261,10 @@ export default function AdminProjectsPage() {
       } else {
         await createItem(payload);
         setStatusMessage('Project created successfully.');
+        showAdminToast({
+          title: 'New project created',
+          message: `${payload.title} was added successfully.`,
+        });
       }
 
       setStatusTone('info');

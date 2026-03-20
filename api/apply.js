@@ -2,6 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 
 const APPLY_TABLE = 'Applications';
 const ALLOWED_CONTENT_TYPES = ['application/json'];
+const MAX_PAYLOAD_BYTES = 32 * 1024;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 25;
 const ALLOWED_DOMAINS = new Set([
   'Frontend Development',
   'Backend Development',
@@ -30,9 +33,48 @@ const FIELD_LIMITS = {
   project: 4000,
 };
 
+const requestRateLimiter = new Map();
+
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeOrigin = (value) => normalizeString(value).replace(/\/$/, '');
+
+const getClientIp = (req) => {
+  const forwardedFor = normalizeString(req.headers['x-forwarded-for']);
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  return normalizeString(req.headers['x-real-ip']) || 'unknown';
+};
+
+const isRateLimited = (req) => {
+  const now = Date.now();
+  const key = `${getClientIp(req)}:${normalizeOrigin(req.headers.origin) || 'no-origin'}`;
+
+  for (const [entryKey, entry] of requestRateLimiter.entries()) {
+    if (entry.resetAt <= now) {
+      requestRateLimiter.delete(entryKey);
+    }
+  }
+
+  const existing = requestRateLimiter.get(key);
+  if (!existing || existing.resetAt <= now) {
+    requestRateLimiter.set(key, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+
+  if (existing.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+
+  existing.count += 1;
+  requestRateLimiter.set(key, existing);
+  return false;
+};
 
 const normalizeProfileUrl = (value) => {
   const normalized = normalizeString(value);
@@ -113,6 +155,9 @@ const isAllowedOrigin = (req, origin) => {
 const applyCorsHeaders = (req, res) => {
   const origin = normalizeOrigin(req.headers.origin);
 
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -144,6 +189,14 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Request origin is not allowed.' });
   }
 
+  if (!origin && !normalizeString(req.headers.referer)) {
+    return res.status(403).json({ error: 'Cross-site request metadata is missing.' });
+  }
+
+  if (isRateLimited(req)) {
+    return res.status(429).json({ error: 'Too many requests. Please wait and try again.' });
+  }
+
   const contentType = normalizeString(req.headers['content-type']).toLowerCase();
   if (!isExpectedJsonRequest(contentType)) {
     return res.status(415).json({ error: 'Requests must use application/json.' });
@@ -157,6 +210,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (typeof req.body === 'string' && Buffer.byteLength(req.body, 'utf8') > MAX_PAYLOAD_BYTES) {
+      return res.status(413).json({ error: 'Request payload is too large.' });
+    }
+
     const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
     if (!data || typeof data !== 'object') {

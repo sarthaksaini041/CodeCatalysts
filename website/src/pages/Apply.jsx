@@ -5,7 +5,8 @@ import {
   Layout, Server, Smartphone, Brain, Cloud, Shield, Palette 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ParallaxBG from '../components/ParallaxBG';
+import LogoBackdrop from '../components/LogoBackdrop';
+import { hasSupabaseBrowserConfig, requireSupabaseBrowserClient } from '../lib/supabase';
 
 /* ── Configuration ── */
 const STEPS = [
@@ -17,8 +18,8 @@ const STEPS = [
   { id: 'review',   label: 'Review',   title: 'Review & Submit', desc: 'Double-check everything before sending.' },
 ];
 
-const YEAR_OPTIONS = ['1st', '2nd', '3rd', '4th', 'Grad'];
-const DOMAIN_OPTIONS = [
+const DEFAULT_YEAR_OPTIONS = ['1st', '2nd', '3rd', '4th', 'Grad'];
+const DEFAULT_DOMAIN_OPTIONS = [
   'Frontend Development', 'Backend Development', 'App Development',
   'AI/ML', 'Cloud', 'Cyber Security', 'UI/UX',
 ];
@@ -44,10 +45,10 @@ const FIELD_META = {
   email: { label: 'Email', placeholder: 'you@domain.com', type: 'email', required: true },
   college: { label: 'College / University', placeholder: 'e.g. GLA University', required: true },
   branch: { label: 'Branch', placeholder: 'e.g. Computer Science', required: true },
-  year: { label: 'Year of Study', required: true, type: 'select', options: YEAR_OPTIONS },
+  year: { label: 'Year of Study', required: true, type: 'select' },
   github: { label: 'GitHub', placeholder: 'https://github.com/you', required: true },
   linkedin: { label: 'LinkedIn', placeholder: 'https://linkedin.com/in/you', required: true },
-  domain: { label: 'Primary Domain', required: true, type: 'select', options: DOMAIN_OPTIONS },
+  domain: { label: 'Primary Domain', required: true, type: 'select' },
   techStack: { label: 'Tech Stack', placeholder: 'Languages, frameworks, tools you ship with...', required: true, type: 'textarea' },
   project: { label: 'A Project You\'re Proud Of', placeholder: 'What you built, your role, stack, and outcome', required: true, type: 'textarea' },
   whyJoin: { label: 'Why Join Code Catalysts?', placeholder: 'What do you want to build here? What excites you?', required: true, type: 'textarea' },
@@ -62,8 +63,37 @@ const STEP_FIELDS = [
   Object.keys(INITIAL), // review
 ];
 
-const PROD_API_ORIGIN = 'https://code-catalysts.vercel.app';
 const SUCCESS_REDIRECT_SECONDS = 10;
+
+const DEFAULT_APPLICATION_FORM_SETTINGS = {
+  title: 'Apply to Join Us',
+  subtitle: 'Become a Catalyst',
+  yearOptions: DEFAULT_YEAR_OPTIONS,
+  domainOptions: DEFAULT_DOMAIN_OPTIONS,
+  successRedirectSeconds: SUCCESS_REDIRECT_SECONDS,
+};
+
+function normalizeApplicationFormSettings(rawSettings = null) {
+  const yearOptions = Array.isArray(rawSettings?.application_form_year_options)
+    ? rawSettings.application_form_year_options.filter((item) => typeof item === 'string' && item.trim())
+    : [];
+
+  const domainOptions = Array.isArray(rawSettings?.application_form_domain_options)
+    ? rawSettings.application_form_domain_options.filter((item) => typeof item === 'string' && item.trim())
+    : [];
+
+  const redirectSeconds = Number.isFinite(rawSettings?.application_form_success_redirect_seconds)
+    ? Math.max(3, Math.min(30, Number(rawSettings.application_form_success_redirect_seconds)))
+    : DEFAULT_APPLICATION_FORM_SETTINGS.successRedirectSeconds;
+
+  return {
+    title: String(rawSettings?.application_form_title || DEFAULT_APPLICATION_FORM_SETTINGS.title),
+    subtitle: String(rawSettings?.application_form_subtitle || DEFAULT_APPLICATION_FORM_SETTINGS.subtitle),
+    yearOptions: yearOptions.length ? yearOptions : DEFAULT_APPLICATION_FORM_SETTINGS.yearOptions,
+    domainOptions: domainOptions.length ? domainOptions : DEFAULT_APPLICATION_FORM_SETTINGS.domainOptions,
+    successRedirectSeconds: redirectSeconds,
+  };
+}
 
 const normalizeBaseUrl = (value) => (value ? value.replace(/\/$/, '') : '');
 
@@ -71,15 +101,6 @@ function getApplyApiUrl() {
   const configuredBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL?.trim());
   if (configuredBaseUrl) {
     return `${configuredBaseUrl}/api/apply`;
-  }
-
-  if (typeof window === 'undefined') {
-    return '/api/apply';
-  }
-
-  const { hostname } = window.location;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${PROD_API_ORIGIN}/api/apply`;
   }
 
   return '/api/apply';
@@ -473,16 +494,50 @@ const ApplyPage = () => {
   const [status, setStatus] = useState('idle'); // idle | success | error
   const [statusMsg, setStatusMsg] = useState('');
   const [successCountdown, setSuccessCountdown] = useState(SUCCESS_REDIRECT_SECONDS);
+  const [formSettings, setFormSettings] = useState(DEFAULT_APPLICATION_FORM_SETTINGS);
 
   const isLast = step === STEPS.length - 1;
   const active = STEPS[step];
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadFormSettings() {
+      if (!hasSupabaseBrowserConfig) {
+        return;
+      }
+
+      try {
+        const client = requireSupabaseBrowserClient();
+        const { data, error } = await client
+          .from('site_settings')
+          .select('application_form_title, application_form_subtitle, application_form_year_options, application_form_domain_options, application_form_success_redirect_seconds')
+          .eq('id', 1)
+          .maybeSingle();
+
+        if (error || !isActive) {
+          return;
+        }
+
+        setFormSettings(normalizeApplicationFormSettings(data));
+      } catch {
+        // Keep defaults when settings are unavailable.
+      }
+    }
+
+    loadFormSettings();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (status !== 'success') {
       return undefined;
     }
 
-    setSuccessCountdown(SUCCESS_REDIRECT_SECONDS);
+    setSuccessCountdown(formSettings.successRedirectSeconds);
 
     const countdownInterval = window.setInterval(() => {
       setSuccessCountdown((current) => {
@@ -497,13 +552,13 @@ const ApplyPage = () => {
 
     const redirectTimer = window.setTimeout(() => {
       navigate('/');
-    }, SUCCESS_REDIRECT_SECONDS * 1000);
+    }, formSettings.successRedirectSeconds * 1000);
 
     return () => {
       window.clearInterval(countdownInterval);
       window.clearTimeout(redirectTimer);
     };
-  }, [navigate, status]);
+  }, [formSettings.successRedirectSeconds, navigate, status]);
 
   const setField = (key, val) => {
     setForm(p => ({ ...p, [key]: val }));
@@ -592,9 +647,9 @@ const ApplyPage = () => {
     const base = {
       fontSize: '0.95rem', width: '100%', padding: '0.85rem 1.2rem',
       borderRadius: '12px',
-      background: 'rgba(255,255,255,.03)',
-      border: `1.5px solid ${err ? 'rgba(244,63,94,.5)' : 'rgba(255,255,255,.08)'}`,
-      color: '#e8e8f0', fontFamily: "'Inter', sans-serif",
+      background: 'linear-gradient(180deg, rgba(7, 12, 24, 0.88), rgba(4, 8, 18, 0.94))',
+      border: `1.5px solid ${err ? 'rgba(244,63,94,.5)' : 'rgba(255,255,255,.1)'}`,
+      color: '#edf4ff', fontFamily: "'Inter', sans-serif",
       outline: 'none', transition: 'border-color .3s ease, box-shadow .3s ease, background .3s ease',
     };
 
@@ -611,7 +666,7 @@ const ApplyPage = () => {
           <CustomSelect
             value={form[key]}
             onChange={(val) => setField(key, val)}
-            options={meta.options}
+            options={key === 'year' ? formSettings.yearOptions : key === 'domain' ? formSettings.domainOptions : []}
             placeholder="Choose..."
             baseStyle={base}
             error={err}
@@ -642,14 +697,32 @@ const ApplyPage = () => {
   };
 
   return (
-    <div style={{
+    <div className="apply-page" style={{
       minHeight: '100vh',
       position: 'relative', overflow: 'hidden',
+      background: '#020212',
     }}>
-      <ParallaxBG />
+      <LogoBackdrop
+        showLogo={false}
+        lightMode="fixed"
+        fixedLightProfile="apply"
+        startupFlicker={false}
+      />
 
-      <div style={{
-        maxWidth: '750px', margin: '0 auto', padding: '2rem 1.5rem 4rem',
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          background:
+            'linear-gradient(180deg, rgba(1, 4, 10, 0.34) 0%, rgba(1, 4, 10, 0.22) 22%, rgba(1, 4, 10, 0.48) 100%), radial-gradient(circle at 50% 18%, rgba(3, 10, 20, 0.1) 0%, rgba(3, 10, 20, 0.36) 58%, rgba(2, 6, 14, 0.72) 100%)',
+        }}
+      />
+
+      <div className="apply-page-content" style={{
+        maxWidth: '780px', margin: '0 auto', padding: '2.25rem 1.5rem 4rem',
         position: 'relative', zIndex: 1,
       }}>
         {/* Back */}
@@ -661,19 +734,21 @@ const ApplyPage = () => {
         </button>
 
         {/* Header */}
-        <div style={{ marginBottom: '2.5rem' }}>
+        <div className="apply-page-header" style={{ marginBottom: '2.5rem' }}>
           <h1 style={{
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: 'clamp(2rem, 5vw, 3rem)',
             fontWeight: 700, letterSpacing: '-0.03em',
             color: '#fff', marginBottom: '0.4rem',
+            textShadow: '0 14px 28px rgba(0,0,0,.42)',
           }}>
-            Apply to <span className="text-gradient">Join Us</span>
+            {formSettings.title}
           </h1>
           <p style={{
-            color: 'var(--neon-cyan)', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'
+            color: 'rgba(140, 242, 255, 0.94)', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+            textShadow: '0 10px 24px rgba(0,0,0,.38)',
           }}>
-            Become a Catalyst
+            {formSettings.subtitle}
           </p>
         </div>
 
@@ -683,8 +758,10 @@ const ApplyPage = () => {
           marginBottom: '2.5rem',
           padding: '1rem 1.2rem',
           borderRadius: '16px',
-          background: 'rgba(255,255,255,.02)',
-          border: '1px solid rgba(255,255,255,.05)',
+          background: 'linear-gradient(180deg, rgba(4, 9, 18, 0.78), rgba(4, 9, 18, 0.52))',
+          border: '1px solid rgba(255,255,255,.08)',
+          boxShadow: '0 18px 44px rgba(0,0,0,.24)',
+          backdropFilter: 'blur(16px)',
         }}>
           {STEPS.map((s, i) => {
             const done = i < step;
@@ -713,7 +790,7 @@ const ApplyPage = () => {
                       : current
                         ? 'rgba(0,212,255,.12)'
                         : 'rgba(255,255,255,.04)',
-                    color: done ? '#041a2b' : current ? 'var(--neon-cyan)' : '#555',
+                    color: done ? '#041a2b' : current ? 'var(--neon-cyan)' : 'rgba(170, 185, 208, 0.7)',
                     border: current ? '1.5px solid rgba(0,212,255,.4)' : '1.5px solid transparent',
                     boxShadow: current ? '0 0 12px rgba(0,212,255,.15)' : 'none',
                   }}
@@ -738,10 +815,10 @@ const ApplyPage = () => {
           <div className="static-texture-card" style={{
             padding: 0,
             borderRadius: '24px',
-            background: 'radial-gradient(120% 100% at 50% 100%, rgba(0, 212, 255, 0.15) 0%, rgba(10, 10, 26, 0.95) 100%)',
-            border: '1px solid rgba(255,255,255,.08)',
-            boxShadow: '0 24px 60px rgba(0,0,0,.4)',
-            backdropFilter: 'blur(20px)',
+            background: 'radial-gradient(140% 120% at 50% 0%, rgba(0, 212, 255, 0.14) 0%, rgba(6, 10, 22, 0.96) 44%, rgba(3, 6, 14, 0.985) 100%)',
+            border: '1px solid rgba(255,255,255,.1)',
+            boxShadow: '0 24px 60px rgba(0,0,0,.48)',
+            backdropFilter: 'blur(22px)',
             overflow: 'visible',
             zIndex: 1,
             transform: 'none'
@@ -785,7 +862,7 @@ const ApplyPage = () => {
               }}>
                 {active.title}
               </h2>
-              <p style={{ color: 'rgba(160,175,195,.65)', fontSize: '0.92rem' }}>
+              <p style={{ color: 'rgba(188, 202, 224, 0.82)', fontSize: '0.92rem' }}>
                 {active.desc}
               </p>
             </div>
@@ -823,10 +900,10 @@ const ApplyPage = () => {
                           background: 'rgba(255,255,255,.02)',
                           border: '1px solid rgba(255,255,255,.04)',
                         }}>
-                          <p style={{ fontSize: '0.68rem', fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+                          <p style={{ fontSize: '0.68rem', fontWeight: 600, color: 'rgba(152, 169, 194, 0.74)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
                             {meta.label}
                           </p>
-                          <p style={{ fontSize: '0.88rem', color: '#ccc', lineHeight: 1.4, wordBreak: 'break-word' }}>
+                          <p style={{ fontSize: '0.88rem', color: '#d7e0f0', lineHeight: 1.4, wordBreak: 'break-word' }}>
                             {val}
                           </p>
                         </div>
@@ -883,7 +960,7 @@ const ApplyPage = () => {
               marginTop: '2rem', paddingTop: '1.2rem',
               borderTop: '1px solid rgba(255,255,255,.05)',
             }}>
-              <span style={{ fontSize: '0.78rem', color: '#555', fontWeight: 500 }}>
+              <span style={{ fontSize: '0.78rem', color: 'rgba(149, 165, 190, 0.72)', fontWeight: 500 }}>
                 Section {step + 1} of {STEPS.length}
               </span>
               <div style={{ display: 'flex', gap: '0.6rem' }}>
@@ -922,6 +999,18 @@ const ApplyPage = () => {
       )}
 
       <style>{`
+        .apply-page-content {
+          text-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+        }
+        .apply-page-header {
+          padding: 1.35rem 1.4rem 1.2rem;
+          border-radius: 24px;
+          background: linear-gradient(180deg, rgba(4, 10, 20, 0.78), rgba(4, 10, 20, 0.46));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 24px 56px rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+        }
         input:focus, textarea:focus, select:focus {
           border-color: rgba(0,212,255,.35) !important;
           box-shadow: 0 0 0 3px rgba(0,212,255,.06);
@@ -935,7 +1024,7 @@ const ApplyPage = () => {
           background: rgba(0,212,255,.02) !important;
         }
         .premium-input::placeholder {
-          color: rgba(160,175,195,.4);
+          color: rgba(174,189,211,.5);
         }
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -956,6 +1045,11 @@ const ApplyPage = () => {
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: rgba(0, 212, 255, 0.4) rgba(255, 255, 255, 0.05);
+        }
+        @media (max-width: 640px) {
+          .apply-page-header {
+            padding: 1.1rem 1rem 1rem;
+          }
         }
       `}</style>
     </div>

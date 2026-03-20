@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Github, Instagram, Linkedin, Mail, Twitter, Zap, ArrowUpRight, ChevronDown } from 'lucide-react';
 import { usePublicContent } from '../context/PublicContentContext';
+import { SITE_LOGO_ALT, SITE_LOGO_SRC } from '../lib/brandAssets';
 
 function renderAccentTitle(title) {
   const words = String(title || '').trim().split(/\s+/).filter(Boolean);
@@ -47,6 +48,17 @@ const Join = () => {
       : null,
     { icon: Mail, href: `mailto:${contactEmail}`, label: 'Email' },
   ].filter(Boolean);
+  const socialLinks = connectLinks.filter((link) => link.label !== 'Email');
+  const footerNavLinks = [
+    { label: 'About', href: '#about' },
+    { label: 'Team', href: '#team' },
+    { label: 'Projects', href: '#projects' },
+    { label: 'Journey', href: '#journey' },
+    faqSection
+      ? { label: faqSection.label || 'FAQ', href: `#${faqSection.anchorId || faqSection.sectionKey}` }
+      : null,
+  ].filter(Boolean);
+  const footerBrandCopy = siteSettings.heroSubtitle || 'Building, learning, and shipping together since 2025.';
   const footerText = (siteSettings.footerText || 'Copyright {year} Code Catalysts. Built by the team.')
     .replace('{year}', String(currentYear));
 
@@ -64,7 +76,7 @@ const Join = () => {
 
       <div className="container" style={{ position: 'relative', zIndex: 10, maxWidth: '1100px', margin: '0 auto', padding: '0 2rem', display: 'flex', flexDirection: 'column' }}>
 
-        {/* ── CTA Card ── */}
+        {/* â”€â”€ CTA Card â”€â”€ */}
         <div id="join" className="join-cta-card">
           <div className="join-cta-topline" />
           <div className="join-cta-noise" />
@@ -166,44 +178,71 @@ const Join = () => {
             </section>
           );
         })() : null}
-      </div>
-
-      <div style={{ 
-        background: '#04050a', 
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)', 
-        paddingTop: '4rem',
-        marginTop: '2rem',
-        position: 'relative',
-        zIndex: 10
-      }}>
+      </div>
+      <div className="footer-stage">
         <div className="container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 2rem' }}>
-          {/* ── Footer Grid ── */}
-          <div className="footer-grid">
-            {/* col 1: brand */}
-            <div className="footer-col">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.8rem' }}>
-                <div style={{
-                  width: '32px', height: '32px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: '8px',
-                  background: 'rgba(0,212,255,.05)',
-                  border: '1px solid rgba(0,212,255,.1)',
-                }}>
-                  <svg viewBox="108 254 722 430" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: '18px', height: '14px', color: 'var(--neon-cyan)' }} aria-hidden="true">
-                    <path d="M349.00004,682.42774 c 27.6132,-4.01546 53.6308,-13.54456 79.0271,-28.9442 18.8469,-11.42825 19.1581,-11.69871 75.9729,-66.02338 35.7334,-34.16728 46.6642,-44.05234 56.1484,-50.77691 7.7963,-5.52772 21.8761,-12.30273 33.8516,-16.28889 10.8249,-3.60319 13.4439,-6.02164 12.6926,-11.72038 -0.7419,-5.62744 -5.3888,-9.55299 -16.5268,-13.96136 -30.0508,-11.89397 -67.7452,-15.02823 -91.7117,-7.62575 -7.9491,2.45525 -8.8455,3.20213 -43.1768,35.97496 -51.9637,49.60487 -57.7405,54.37042 -78.8497,65.04647 -26.7407,13.52422 -56.6901,16.83349 -85.7139,9.47099 -39.4608,-10.01006 -70.2017,-41.91138 -80.4311,-83.46724 -2.2718,-9.22908 -2.6034,-12.63202 -2.5449,-26.11205 0.059,-13.45911 0.4163,-16.81207 2.7174,-25.46483 9.2081,-34.62534 33.4969,-62.12492 67.2475,-76.13728 22.4194,-9.30797 51.0692,-10.94006 75.1228,-4.27951 16.2852,4.50946 34.1091,14.10538 48.3561,26.03362 l 4.8073,4.0249 4.0442,-3.20308 c 5.9458,-4.70913 52.2397,-49.25745 52.7274,-50.73918 0.5576,-1.69429 -12.2554,-14.87314 -22.5978,-23.24296 -20.657,-16.71714 -52.4027,-31.41578 -79.6626,-36.88474 -49.4938,-9.92957 -101.4605,-1.11442 -143.5,24.34203 -32.5065,19.68381 -59.3344,49.21421 -75.905,83.55103 -45.678802,94.65394 -6.4168,209.81818 87.5502,256.80427 25.2892,12.64529 46.3821,18.49903 77.8548,21.60638 7.2578,0.71658 31.8156,-0.4292 42.5,-1.98291 z m 313.3928,0.0846 c 51.1335,-7.78556 95.1485,-33.72244 127.0211,-74.85006 22.9334,-29.59276 35.9383,-63.7599 38.7882,-101.90654 3.4238,-45.82739 -8.0091,-88.45242 -34.2665,-127.7557 -6.2537,-9.36077 -11.6264,-15.79072 -21.3933,-25.60321 -20.357,-20.45205 -39.5117,-33.64703 -62.6336,-43.1462 -63.7134,-26.17539 -133.2676,-17.56162 -188.5969,23.35636 -7.798,5.76692 -31.2381,27.70252 -68.2981,63.91444 -30.5245,29.82591 -40.3163,37.39535 -62.5137,48.32527 -13.8136,6.80173 -26.5019,11.1533 -32.521,11.1533 -2.5551,0 -4.9249,0.27917 -5.2661,0.62039 -0.7471,0.74713 5.4459,10.7344 9.1443,14.74666 8.4269,9.14202 23.807,17.96839 37.6428,21.60246 17.9262,4.70848 35.1662,4.68542 54,-0.0722 16.4212,-4.14824 20.9399,-7.14583 42,-27.8619 50.9446,-50.11241 62.6477,-60.39846 80,-70.31342 9.9791,-5.70199 26.3453,-11.94427 37.5,-14.30294 10.0414,-2.12328 30.2698,-2.39962 39.7875,-0.54355 22.0185,4.29394 46.0361,17.44567 60.614,33.19152 31.4854,34.00805 38.9804,85.05696 18.7096,127.43303 -19.3173,40.38266 -62.5171,64.76429 -107.1598,60.48013 -22.7723,-2.18536 -41.0434,-9.60405 -60.7097,-24.65021 l -8.2584,-6.31826 -17.2416,16.68805 c -31.9572,30.93112 -36.8637,35.79154 -38.7733,38.40891 l -1.9032,2.60861 10.0284,8.86549 c 13.6871,12.09984 24.2926,19.47271 37.9065,26.35214 14.882,7.5203 28.1705,12.44333 43.319,16.04849 10.6451,2.53343 15.55,3.34651 32.681,5.41755 6.3409,0.76657 30.3168,-0.35444 40.3928,-1.8886 z" />
-                  </svg>
-                </div>
-                <span style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '1rem', fontWeight: 700,
-                }}>
-                  <span className="text-gradient">Code</span>
-                  <span style={{ color: '#fff' }}>Catalysts</span>
-                </span>
+          <div className="footer-panel">
+            <div className="footer-panel-pattern" />
+            <div className="footer-panel-glow footer-panel-glow-left" />
+            <div className="footer-panel-glow footer-panel-glow-right" />
+
+            <div className="footer-emblem" aria-hidden="true">
+              <div className="footer-emblem-core">
+                <img src={SITE_LOGO_SRC} alt={SITE_LOGO_ALT} className="footer-emblem-image" />
               </div>
-              <p style={{ color: 'rgba(230,240,250,.9)', fontSize: '0.85rem', lineHeight: 1.6, maxWidth: '260px', fontWeight: 500 }}>
-                Building, learning, and shipping together since 2025.
+            </div>
+
+            <div className="footer-shell">
+              <div className="footer-column footer-contact">
+                <h4 className="footer-heading">Contact</h4>
+                <a href={`mailto:${contactEmail}`} className="footer-mail-link">
+                  {contactEmail}
+                </a>
+                {socialLinks.length ? (
+                  <div className="footer-text-links">
+                    {socialLinks.map(({ href, label }) => (
+                      <a
+                        key={label}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="footer-text-link"
+                      >
+                        <span>{label}</span>
+                        <ArrowUpRight size={14} />
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="footer-column footer-brand">
+                <h3 className="footer-brand-title">
+                  <span className="footer-brand-accent">Code</span>
+                  <span>Catalysts</span>
+                </h3>
+                <p className="footer-brand-copy">
+                  {footerBrandCopy}
+                </p>
+
+
+              </div>
+
+              <div className="footer-column footer-explore">
+                <h4 className="footer-heading">Navigate</h4>
+                <div className="footer-nav-grid">
+                  {footerNavLinks.map((item) => (
+                    <a key={item.label} href={item.href} className="footer-link">
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="footer-bottom" data-has-links={brandLinks.length ? 'true' : undefined}>
+              <p className="footer-bottom-copy">
+                {footerText}
               </p>
               {brandLinks.length ? (
                 <div className="footer-brand-links">
@@ -221,46 +260,10 @@ const Join = () => {
                 </div>
               ) : null}
             </div>
-
-            {/* col 2: quick links */}
-            <div className="footer-col">
-              <h4 className="footer-heading" style={{ color: '#aab4c2' }}>Navigate</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {['About', 'Team', 'Projects', 'Journey'].map((l) => (
-                  <a key={l} href={`#${l.toLowerCase()}`} className="footer-link" style={{ color: 'rgba(230,240,250,.8)' }}>{l}</a>
-                ))}
-              </div>
-            </div>
-
-            {/* col 3: connect */}
-            <div className="footer-col">
-              <h4 className="footer-heading" style={{ color: '#aab4c2' }}>Connect</h4>
-              <div style={{ display: 'flex', gap: '0.6rem' }}>
-                {connectLinks.map(({ icon: Icon, href, label }) => (
-                  <a key={label} href={href} target={label !== 'Email' ? '_blank' : undefined}
-                    rel="noopener noreferrer" aria-label={label}
-                    className="footer-social" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                    <Icon size={16} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* bottom bar */}
-          <div style={{
-            marginTop: '2.5rem', paddingTop: '1.5rem', paddingBottom: '2.5rem',
-            borderTop: '1px solid rgba(255,255,255,.08)',
-            display: 'flex', justifyContent: 'center',
-          }}>
-            <p style={{ color: 'rgba(200,210,230,.8)', fontSize: '0.85rem', textAlign: 'center', fontWeight: 500 }}>
-              {footerText}
-            </p>
           </div>
         </div>
       </div>
-
-      <style>{`
+<style>{`
         .join-cta-card {
           position: relative;
           isolation: isolate;
@@ -273,10 +276,13 @@ const Join = () => {
           overflow: hidden;
           border: 1px solid rgba(98, 176, 255, 0.14);
           background:
-            linear-gradient(180deg, rgba(12, 14, 30, 0.95) 0%, rgba(8, 10, 24, 0.97) 48%, rgba(4, 5, 14, 0.99) 100%);
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -26%), rgba(242, 254, 255, calc(0.05 + (var(--surface-light-strength, 0.34) * 0.16))) 0%, rgba(116, 236, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.38))) 18%, transparent 56%),
+            linear-gradient(180deg, rgba(196, 252, 255, calc(0.03 + (var(--surface-sheen-opacity, 0.08) * 0.6))) 0%, rgba(12, 14, 30, 0.95) 18%, rgba(8, 10, 24, 0.97) 48%, rgba(4, 5, 14, 0.99) 100%);
           box-shadow:
-            0 28px 70px rgba(0, 0, 0, 0.38),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 28px) var(--surface-shadow-blur, 46px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.14)),
+            calc(var(--surface-shadow-x, 0px) * 0.45) calc(var(--surface-shadow-y, 28px) * 0.52) calc(var(--surface-shadow-blur, 46px) * 0.56) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.42)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.03 + (var(--surface-edge-opacity, 0.08) * 0.56))),
+            inset 0 -24px 44px rgba(0, 0, 0, calc(var(--surface-occlusion-opacity, 0.14) * 0.92));
         }
         .join-cta-topline {
           position: absolute;
@@ -311,11 +317,11 @@ const Join = () => {
         }
         .join-cta-glow-top {
           z-index: 0;
-          inset: -20% 18% auto;
-          height: 48%;
-          background: radial-gradient(circle, rgba(0, 212, 255, 0.14), transparent 66%);
-          filter: blur(54px);
-          opacity: 0.7;
+          inset: -22% 14% auto;
+          height: 52%;
+          background: radial-gradient(circle, rgba(132, 247, 255, 0.24), rgba(0, 212, 255, 0.12) 42%, transparent 70%);
+          filter: blur(56px);
+          opacity: 0.82;
         }
         .join-cta-glow-bottom {
           z-index: 0;
@@ -337,8 +343,8 @@ const Join = () => {
           background: linear-gradient(180deg, rgba(0, 212, 255, 0.1), rgba(167, 139, 250, 0.05));
           border: 1px solid rgba(108, 196, 255, 0.18);
           box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.08),
-            0 12px 24px rgba(0, 0, 0, 0.18);
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 18px 30px rgba(0, 0, 0, 0.24);
           backdrop-filter: blur(10px);
         }
         .join-cta-title {
@@ -389,14 +395,16 @@ const Join = () => {
           padding: 0 2rem;
           border-radius: 999px;
           border: 1px solid rgba(145, 176, 255, 0.5);
-          background: linear-gradient(100deg, #32dcff 0%, #49c7ff 32%, #6898ff 66%, #8d67ff 100%);
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.06 + (var(--surface-light-strength, 0.34) * 0.14))) 0%, rgba(188, 246, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.3))) 20%, transparent 52%),
+            linear-gradient(100deg, #32dcff 0%, #49c7ff 32%, #6898ff 66%, #8d67ff 100%);
           color: #132844;
           font-family: 'Space Grotesk', sans-serif;
           font-size: 1rem;
           font-weight: 700;
           letter-spacing: -0.02em;
           box-shadow:
-            0 14px 34px rgba(0, 0, 0, 0.24),
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 20px) var(--surface-shadow-blur, 34px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.06)),
             0 0 32px rgba(56, 199, 255, 0.22),
             0 10px 26px rgba(110, 80, 255, 0.14),
             inset 0 1px 0 rgba(255, 255, 255, 0.34);
@@ -444,10 +452,11 @@ const Join = () => {
           padding: clamp(1.4rem, 3vw, 2rem);
           border: 1px solid rgba(103, 170, 255, 0.12);
           background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -24%), rgba(242, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.12))) 0%, rgba(116, 236, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.26))) 18%, transparent 58%),
             linear-gradient(180deg, rgba(10, 12, 28, 0.88) 0%, rgba(7, 9, 22, 0.95) 100%);
           box-shadow:
-            0 24px 60px rgba(0, 0, 0, 0.22),
-            inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 22px) var(--surface-shadow-blur, 40px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.08)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.34)));
         }
         .join-faq-shell::before {
           content: '';
@@ -512,13 +521,15 @@ const Join = () => {
         .join-faq-item {
           border-radius: 20px;
           border: 1px solid rgba(255, 255, 255, 0.06);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -28%), rgba(255, 255, 255, calc(0.02 + (var(--surface-light-strength, 0.34) * 0.08))) 0%, transparent 56%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
           transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
         }
         .join-faq-item.is-open {
           border-color: rgba(94, 186, 255, 0.24);
           background: linear-gradient(180deg, rgba(0, 212, 255, 0.05) 0%, rgba(167, 139, 250, 0.035) 100%);
-          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+          box-shadow: var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 18px) * 0.54) calc(var(--surface-shadow-blur, 30px) * 0.48) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.36));
         }
         .join-faq-trigger {
           width: 100%;
@@ -563,31 +574,277 @@ const Join = () => {
           color: rgba(194, 208, 233, 0.78);
           font-size: 0.94rem;
           line-height: 1.7;
+        }
+        .footer-stage {
+          position: relative;
+          z-index: 10;
+          margin-top: 1.75rem;
+          padding: 2.4rem 0 1.5rem;
         }
-        .footer-grid {
+        .footer-panel {
+          position: relative;
+          overflow: visible;
+          border-radius: 34px;
+          padding: clamp(3.75rem, 7vw, 5rem) clamp(1.3rem, 4vw, 2.5rem) 1.35rem;
+          border: 1px solid rgba(80, 160, 255, 0.12);
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -26%), rgba(238, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.14))) 0%, rgba(96, 232, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.34))) 18%, transparent 54%),
+            radial-gradient(circle at top center, rgba(0, 212, 255, 0.08), transparent 34%),
+            linear-gradient(180deg, rgba(8, 12, 26, 0.98) 0%, rgba(4, 6, 14, 0.99) 100%);
+          box-shadow:
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 28px) var(--surface-shadow-blur, 48px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.14)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.38)));
+        }
+        .footer-panel::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 14%, rgba(255, 255, 255, 0.02) 100%);
+        }
+        .footer-panel-pattern,
+        .footer-panel-glow {
+          position: absolute;
+          pointer-events: none;
+        }
+        .footer-panel-pattern {
+          inset: 0;
+          border-radius: inherit;
+          background-image: url("data:image/svg+xml,%3Csvg width='900' height='520' viewBox='0 0 900 520' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1.2'%3E%3Cpath d='M-60 120C40 40 180 34 270 100C360 166 500 164 594 98C688 32 826 40 948 120'/%3E%3Cpath d='M-84 216C38 132 184 132 274 198C364 264 504 264 602 190C700 116 846 122 972 206'/%3E%3Cpath d='M-52 330C58 250 200 246 296 304C392 362 526 364 620 310C714 256 846 252 952 328'/%3E%3Cpath d='M-98 438C24 352 186 350 286 414C386 478 540 480 646 418C752 356 904 356 1018 442'/%3E%3Cpath d='M120 -40C70 52 80 152 132 220C184 288 188 386 132 484'/%3E%3Cpath d='M332 -30C280 58 280 164 330 248C380 332 384 430 338 548'/%3E%3Cpath d='M580 -52C530 54 530 164 584 246C638 328 650 426 618 546'/%3E%3Cpath d='M786 -44C750 44 752 146 804 232C856 318 876 414 842 536'/%3E%3C/g%3E%3C/svg%3E");
+          background-size: cover;
+          background-position: center;
+          opacity: 0.9;
+        }
+        .footer-panel-glow-left {
+          inset: 16% auto auto -4%;
+          width: 180px;
+          height: 180px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.12), transparent 70%);
+          filter: blur(40px);
+        }
+        .footer-panel-glow-right {
+          inset: auto -6% 10% auto;
+          width: 220px;
+          height: 220px;
+          background: radial-gradient(circle, rgba(167, 139, 250, 0.12), transparent 72%);
+          filter: blur(46px);
+        }
+        .footer-emblem {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 92px;
+          height: 92px;
+          transform: translate(-50%, -44%);
+          z-index: 2;
+        }
+        .footer-emblem-core {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 30px;
+          overflow: hidden;
+          background: linear-gradient(180deg, rgba(8, 14, 28, 0.98) 0%, rgba(4, 6, 16, 0.98) 100%);
+          border: 1px solid rgba(80, 192, 255, 0.28);
+          box-shadow:
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 18px) var(--surface-shadow-blur, 28px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.08)),
+            0 0 34px rgba(0, 212, 255, 0.14),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.03 + (var(--surface-edge-opacity, 0.08) * 0.4)));
+        }
+        .footer-emblem-core::before {
+          content: '';
+          position: absolute;
+          inset: 12%;
+          border-radius: 22px;
+          background:
+            radial-gradient(circle at 24% 24%, rgba(0, 212, 255, 0.3), transparent 42%),
+            radial-gradient(circle at 78% 78%, rgba(167, 139, 250, 0.18), transparent 54%);
+          filter: blur(10px);
+        }
+        .footer-emblem-image {
+          position: relative;
+          z-index: 1;
+          width: 48px;
+          height: 48px;
+          object-fit: cover;
+          border-radius: 14px;
+          display: block;
+        }
+        .footer-shell,
+        .footer-bottom {
+          position: relative;
+          z-index: 1;
+        }
+        .footer-shell {
           display: grid;
-          grid-template-columns: 1.5fr 1fr 1fr;
-          gap: 3rem;
+          grid-template-columns: minmax(0, 1fr) minmax(280px, 1.35fr) minmax(0, 1fr);
+          gap: clamp(1.5rem, 4vw, 3rem);
+          align-items: start;
         }
-        @media (max-width: 640px) {
-          .footer-grid {
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            text-align: center;
-          }
-          .footer-col { align-items: center; }
-          .footer-col p { margin: 0 auto; }
-          .footer-brand-links { justify-content: center; }
-        }
-        .footer-col {
+        .footer-column {
           display: flex;
           flex-direction: column;
+        }
+        .footer-contact {
+          padding-top: 0.55rem;
+        }
+        .footer-explore {
+          align-items: flex-end;
+          padding-top: 0.55rem;
+        }
+        .footer-heading {
+          margin-bottom: 0.9rem;
+          color: rgba(180, 210, 255, 0.76);
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .footer-mail-link {
+          width: fit-content;
+          color: #f5f7ff;
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 1rem;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+        .footer-mail-link:hover {
+          color: #7fe2ff;
+        }
+        .footer-text-links {
+          display: grid;
+          gap: 0.5rem;
+          margin-top: 1rem;
+        }
+        .footer-text-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          width: fit-content;
+          color: rgba(214, 220, 234, 0.78);
+          font-size: 0.92rem;
+          transition: color 0.25s ease;
+        }
+        .footer-text-link svg {
+          opacity: 0.65;
+          transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        .footer-text-link:hover {
+          color: #ffffff;
+        }
+        .footer-text-link:hover svg {
+          opacity: 1;
+          transform: translate(2px, -2px);
+        }
+        .footer-brand {
+          align-items: center;
+          text-align: center;
+        }
+        .footer-brand-title {
+          display: flex;
+          flex-direction: column;
+          gap: 0.05rem;
+          margin: 0;
+          color: #f0f4ff;
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: clamp(2.2rem, 4.5vw, 3.3rem);
+          font-weight: 700;
+          letter-spacing: -0.05em;
+          line-height: 0.95;
+          text-shadow: 0 6px 28px rgba(0, 0, 0, 0.22);
+        }
+        .footer-brand-accent {
+          background: linear-gradient(120deg, #b4d8ff 0%, #00d4ff 42%, #a78bfa 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .footer-brand-copy {
+          max-width: 32ch;
+          margin-top: 1rem;
+          color: rgba(214, 222, 236, 0.72);
+          font-size: 0.96rem;
+          line-height: 1.75;
+        }
+        .footer-actions {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.75rem;
+          margin-top: 1.65rem;
+        }
+        .footer-action {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.55rem;
+          min-height: 48px;
+          padding: 0 1.15rem;
+          border-radius: 999px;
+          border: 1px solid transparent;
+          font-size: 0.92rem;
+          font-weight: 700;
+          transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+        }
+        .footer-action-primary {
+          color: #0d1a2b;
+          background: linear-gradient(100deg, #32dcff 0%, #49c7ff 30%, #6898ff 72%, #8d67ff 100%);
+          box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.18),
+            0 10px 24px rgba(56, 199, 255, 0.12);
+        }
+        .footer-action-secondary {
+          color: #f1f4fb;
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.12);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .footer-nav-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(100px, auto));
+          gap: 0.65rem 1.25rem;
+          justify-content: flex-end;
+          justify-items: start;
+        }
+        .footer-link {
+          padding: 0.1rem 0;
+          color: rgba(226, 232, 244, 0.84);
+          font-size: 0.95rem;
+          font-weight: 600;
+          transition: color 0.25s ease, transform 0.25s ease;
+        }
+        .footer-link:hover {
+          color: #ffffff;
+          transform: translateX(2px);
+        }
+        .footer-bottom {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.9rem 1.25rem;
+          margin-top: 2rem;
+          padding-top: 1.1rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .footer-bottom[data-has-links] {
+          justify-content: space-between;
+        }
+        .footer-bottom-copy {
+          color: rgba(198, 204, 216, 0.74);
+          font-size: 0.84rem;
+          font-weight: 500;
+          text-align: center;
         }
         .footer-brand-links {
           display: flex;
           flex-wrap: wrap;
           gap: 0.55rem;
-          margin-top: 1rem;
+          justify-content: flex-end;
         }
         .footer-brand-link {
           display: inline-flex;
@@ -596,52 +853,52 @@ const Join = () => {
           min-height: 36px;
           padding: 0 0.9rem;
           border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.12);
-          background: rgba(255,255,255,.05);
-          color: rgba(230,240,250,.88);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.02 + (var(--surface-light-strength, 0.34) * 0.08))) 0%, transparent 54%),
+            rgba(255, 255, 255, 0.05);
+          color: rgba(230, 240, 250, 0.88);
           font-size: 0.82rem;
           font-weight: 600;
           transition: all 0.25s ease;
+          box-shadow:
+            var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 18px) * 0.4) calc(var(--surface-shadow-blur, 30px) * 0.36) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.28)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.28)));
         }
         .footer-brand-link:hover {
-          color: #fff;
-          border-color: rgba(0,212,255,.22);
-          background: rgba(0,212,255,.08);
+          color: #ffffff;
+          border-color: rgba(92, 210, 255, 0.3);
+          background: rgba(92, 210, 255, 0.09);
         }
-        .footer-heading {
-          font-size: 0.75rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.14em;
-          color: rgba(160,170,190,.9);
-          margin-bottom: 0.8rem;
+
+        @media (max-width: 960px) {
+          .footer-shell {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            text-align: center;
+          }
+          .footer-contact,
+          .footer-brand,
+          .footer-explore {
+            align-items: center;
+            padding-top: 0;
+            text-align: center;
+          }
+          .footer-mail-link,
+          .footer-text-link {
+            margin-inline: auto;
+          }
+          .footer-nav-grid {
+            justify-content: center;
+            justify-items: center;
+          }
+          .footer-bottom[data-has-links] {
+            justify-content: center;
+          }
+          .footer-brand-links {
+            justify-content: center;
+          }
         }
-        .footer-link {
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: rgba(160,170,190,.9);
-          transition: all 0.25s ease;
-          padding: 0.15rem 0;
-        }
-        .footer-link:hover {
-          color: #fff;
-        }
-        .footer-social {
-          width: 38px; height: 38px;
-          display: flex; align-items: center; justify-content: center;
-          border-radius: 10px;
-          background: rgba(255,255,255,.06);
-          border: 1px solid rgba(255,255,255,.1);
-          color: rgba(200,210,230,.9);
-          transition: all 0.3s ease;
-        }
-        .footer-social:hover {
-          color: var(--neon-cyan);
-          border-color: rgba(0,212,255,.2);
-          background: rgba(0,212,255,.04);
-          box-shadow: 0 0 12px rgba(0,212,255,.08);
-        }
-        .hover-cyan:hover { color: var(--neon-cyan) !important; }
 
         @media (hover: hover) and (pointer: fine) {
           .join-cta-card:hover {
@@ -667,6 +924,18 @@ const Join = () => {
           }
           .join-cta-button:hover .join-cta-button-arrow svg {
             transform: translate(1px, -1px) rotate(6deg);
+          }
+          .footer-action:hover {
+            transform: translateY(-2px);
+          }
+          .footer-action-primary:hover {
+            box-shadow:
+              0 18px 36px rgba(0, 0, 0, 0.22),
+              0 14px 28px rgba(56, 199, 255, 0.18);
+          }
+          .footer-action-secondary:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
           }
         }
         @media (max-width: 640px) {
@@ -696,6 +965,39 @@ const Join = () => {
           .join-cta-copy {
             font-size: 0.96rem;
           }
+          .footer-stage {
+            padding-top: 2rem;
+          }
+          .footer-panel {
+            border-radius: 28px;
+            padding: 3.25rem 1rem 1.2rem;
+          }
+          .footer-emblem {
+            width: 78px;
+            height: 78px;
+          }
+          .footer-emblem-core {
+            border-radius: 24px;
+          }
+          .footer-emblem-image {
+            width: 42px;
+            height: 42px;
+          }
+          .footer-brand-title {
+            font-size: clamp(1.9rem, 10vw, 2.6rem);
+          }
+          .footer-actions {
+            width: 100%;
+          }
+          .footer-action {
+            width: 100%;
+            max-width: 320px;
+          }
+          .footer-nav-grid {
+            width: min(100%, 320px);
+            grid-template-columns: repeat(2, minmax(110px, 1fr));
+            gap: 0.55rem 0.85rem;
+          }
         }
       `}</style>
     </footer>
@@ -703,3 +1005,4 @@ const Join = () => {
 };
 
 export default Join;
+

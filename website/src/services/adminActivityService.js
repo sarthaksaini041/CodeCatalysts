@@ -1,9 +1,18 @@
 import {
+  applicationsAdminService,
   journeyAdminService,
   membersAdminService,
   projectsAdminService,
   siteSettingsAdminService,
 } from './adminContentService';
+import {
+  ADMIN_APPLICATIONS_PATH,
+  ADMIN_JOURNEY_PATH,
+  ADMIN_MEMBERS_PATH,
+  ADMIN_PORTAL_BASE_PATH,
+  ADMIN_PROJECTS_PATH,
+  ADMIN_SETTINGS_PATH,
+} from '../lib/adminPortalRoutes';
 
 function mapActivityRecords(records, type) {
   return records.map((record) => {
@@ -16,7 +25,7 @@ function mapActivityRecords(records, type) {
         title: record.name || 'Untitled member',
         description: record.role || 'Member details updated',
         timestamp,
-        href: '/admin/members',
+        href: ADMIN_MEMBERS_PATH,
       };
     }
 
@@ -27,7 +36,7 @@ function mapActivityRecords(records, type) {
         title: record.title || 'Untitled project',
         description: record.status || record.category || 'Project details updated',
         timestamp,
-        href: '/admin/projects',
+        href: ADMIN_PROJECTS_PATH,
       };
     }
 
@@ -38,7 +47,20 @@ function mapActivityRecords(records, type) {
         title: record.title || 'Untitled entry',
         description: record.date_label || 'Timeline entry updated',
         timestamp,
-        href: '/admin/journey',
+        href: ADMIN_JOURNEY_PATH,
+      };
+    }
+
+    if (type === 'applications') {
+      return {
+        id: record.id,
+        type: 'Application',
+        title: record.name || record.email || 'New application',
+        description: record.domain
+          ? `Applied for ${record.domain}`
+          : 'New application submitted',
+        timestamp,
+        href: ADMIN_APPLICATIONS_PATH,
       };
     }
 
@@ -48,7 +70,7 @@ function mapActivityRecords(records, type) {
       title: record.title || record.name || 'Updated item',
       description: 'Website content updated',
       timestamp,
-      href: '/admin',
+      href: ADMIN_PORTAL_BASE_PATH,
     };
   });
 }
@@ -57,12 +79,14 @@ export function createAdminActivityEntries({
   members = [],
   projects = [],
   journey = [],
+  applications = [],
   settings = null,
 } = {}) {
   const entries = [
     ...mapActivityRecords(members, 'team'),
     ...mapActivityRecords(projects, 'projects'),
     ...mapActivityRecords(journey, 'journey'),
+    ...mapActivityRecords(applications, 'applications'),
   ];
 
   if (settings?.updated_at) {
@@ -72,7 +96,7 @@ export function createAdminActivityEntries({
       title: settings.hero_title || 'Site settings',
       description: 'Hero and footer settings updated',
       timestamp: settings.updated_at,
-      href: '/admin/settings',
+      href: ADMIN_SETTINGS_PATH,
     });
   }
 
@@ -87,10 +111,11 @@ export function getRecentAdminActivityCount(entries, days = 7) {
 }
 
 export async function listAdminActivity() {
-  const [members, projects, journey, settings] = await Promise.all([
+  const [members, projects, journey, applications, settings] = await Promise.all([
     membersAdminService.list(),
     projectsAdminService.list(),
     journeyAdminService.list(),
+    applicationsAdminService.list(),
     siteSettingsAdminService.get(),
   ]);
 
@@ -98,6 +123,7 @@ export async function listAdminActivity() {
     members,
     projects,
     journey,
+    applications,
     settings,
   });
 }

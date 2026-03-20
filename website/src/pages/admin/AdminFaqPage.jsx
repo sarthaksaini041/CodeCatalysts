@@ -19,6 +19,7 @@ import {
   loadManagedFaqSection,
   saveManagedFaqSection,
 } from '../../services/faqContentService';
+import { showAdminToast } from '../../lib/adminToast';
 import { moveItem } from '../../utils/content';
 
 const EMPTY_ITEM_FORM = {
@@ -265,6 +266,13 @@ export default function AdminFaqPage() {
         },
         editingItem ? 'Question updated successfully.' : 'Question created successfully.',
       );
+
+      if (!editingItem) {
+        showAdminToast({
+          title: 'New question created',
+          message: `${nextItem.title} was added successfully.`,
+        });
+      }
 
       resetItemForm();
     } catch (error) {

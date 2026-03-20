@@ -1,25 +1,33 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
 import Join from './components/Join';
-import Preloader from './components/Preloader';
-import AdminLayout from './components/admin/AdminLayout';
-import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
 import { PublicContentProvider } from './context/PublicContentContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
+import {
+  ADMIN_LOGIN_PATH,
+  ADMIN_PORTAL_BASE_PATH,
+  ADMIN_RECOVERY_PATH,
+  ADMIN_RESET_PASSWORD_PATH,
+  LEGACY_ADMIN_BASE_PATH,
+  adminPortalPath,
+} from './lib/adminPortalRoutes';
 
 import { motion } from 'framer-motion';
 
-const PRELOADER_SESSION_KEY = 'codecatalysts:preloader-complete';
-const ParallaxBG = lazy(() => import('./components/ParallaxBG'));
+const LogoBackdrop = lazy(() => import('./components/LogoBackdrop'));
 const Team = lazy(() => import('./components/Team'));
 const Projects = lazy(() => import('./components/Projects'));
 const Journey = lazy(() => import('./components/Journey'));
 const ApplyPage = lazy(() => import('./pages/Apply'));
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
+const ProtectedAdminRoute = lazy(() => import('./components/admin/ProtectedAdminRoute'));
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminRecoveryPage = lazy(() => import('./pages/admin/AdminRecoveryPage'));
+const AdminResetPasswordPage = lazy(() => import('./pages/admin/AdminResetPasswordPage'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
 const AdminMembersPage = lazy(() => import('./pages/admin/AdminMembersPage'));
 const AdminProjectsPage = lazy(() => import('./pages/admin/AdminProjectsPage'));
@@ -27,37 +35,10 @@ const AdminJourneyPage = lazy(() => import('./pages/admin/AdminJourneyPage'));
 const AdminFaqPage = lazy(() => import('./pages/admin/AdminFaqPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 const AdminMediaPage = lazy(() => import('./pages/admin/AdminMediaPage'));
+const AdminApplicationsPage = lazy(() => import('./pages/admin/AdminApplicationsPage'));
 const AdminActivityPage = lazy(() => import('./pages/admin/AdminActivityPage'));
 const AdminAccountPage = lazy(() => import('./pages/admin/AdminAccountPage'));
 const ANCHOR_INTENT_EVENT = 'codecatalysts:anchor-intent';
-
-function shouldSkipPreloader() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    const alreadySeen = window.sessionStorage.getItem(PRELOADER_SESSION_KEY) === 'true';
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const isHomeRoute = window.location.pathname === '/';
-
-    return !isHomeRoute || alreadySeen || prefersReducedMotion;
-  } catch {
-    return window.location.pathname !== '/';
-  }
-}
-
-function markPreloaderComplete() {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(PRELOADER_SESSION_KEY, 'true');
-  } catch {
-    // Ignore storage failures and continue without session persistence.
-  }
-}
 
 /* ── Stagger container — orchestrates child entrance ── */
 const staggerContainer = {
@@ -190,95 +171,86 @@ const DeferredSection = ({
   );
 };
 
-function HomePage({ backgroundReady, contentReady }) {
+function HomePage() {
   return (
     <PublicContentProvider>
       <motion.div
         variants={staggerContainer}
         initial="hidden"
-        animate={contentReady ? 'visible' : 'hidden'}
+        animate="visible"
       >
         {/* Background scales in first */}
         <motion.div
           initial="hidden"
-          animate={backgroundReady ? 'visible' : 'hidden'}
+          animate="visible"
           variants={scaleFade}
         >
-          {backgroundReady ? (
-            <Suspense fallback={null}>
-              <ParallaxBG />
-            </Suspense>
-          ) : null}
+          <Suspense fallback={null}>
+            <LogoBackdrop
+              logoAnchorSelector='[data-hero-title-stage="true"]'
+              startupFlicker
+              startupFlickerDelayMs={520}
+            />
+          </Suspense>
         </motion.div>
 
-        {contentReady ? (
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Navbar slides down */}
-            <motion.div variants={slideDown}>
-              <Navbar />
-            </motion.div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Navbar slides down */}
+          <motion.div variants={slideDown}>
+            <Navbar />
+          </motion.div>
 
-            <main>
-              {/* Hero fades up */}
-              <motion.div variants={fadeUp}>
-                <Hero />
-              </motion.div>
-
-              <SectionWrapper delay={0.1}><About /></SectionWrapper>
-              <DeferredSection anchorId="team" minHeight={980}>
-                <Suspense fallback={<SectionFallback minHeight={980} />}>
-                  <SectionWrapper delay={0.1}><Team /></SectionWrapper>
-                </Suspense>
-              </DeferredSection>
-              <DeferredSection anchorId="projects" minHeight={560}>
-                <Suspense fallback={<SectionFallback minHeight={560} />}>
-                  <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
-                </Suspense>
-              </DeferredSection>
-              <DeferredSection anchorId="journey" minHeight={720}>
-                <Suspense fallback={<SectionFallback minHeight={720} />}>
-                  <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
-                </Suspense>
-              </DeferredSection>
-            </main>
-
+          <main>
+            {/* Hero fades up */}
             <motion.div variants={fadeUp}>
-              <Join />
+              <Hero />
             </motion.div>
-          </div>
-        ) : null}
+
+            <SectionWrapper delay={0.1}><About /></SectionWrapper>
+            <DeferredSection anchorId="team" minHeight={980}>
+              <Suspense fallback={<SectionFallback minHeight={980} />}>
+                <SectionWrapper delay={0.1}><Team /></SectionWrapper>
+              </Suspense>
+            </DeferredSection>
+            <DeferredSection anchorId="projects" minHeight={560}>
+              <Suspense fallback={<SectionFallback minHeight={560} />}>
+                <SectionWrapper delay={0.1}><Projects /></SectionWrapper>
+              </Suspense>
+            </DeferredSection>
+            <DeferredSection anchorId="journey" minHeight={720}>
+              <Suspense fallback={<SectionFallback minHeight={720} />}>
+                <SectionWrapper delay={0.1}><Journey /></SectionWrapper>
+              </Suspense>
+            </DeferredSection>
+          </main>
+
+          <motion.div variants={fadeUp}>
+            <Join />
+          </motion.div>
+        </div>
       </motion.div>
     </PublicContentProvider>
   );
 }
 
-function App() {
-  const skipPreloader = shouldSkipPreloader();
-  const [backgroundReady, setBackgroundReady] = useState(skipPreloader);
-  const [preloaderDone, setPreloaderDone] = useState(skipPreloader);
+function LegacyAdminRedirect() {
+  const location = useLocation();
+  const legacyPrefixPattern = new RegExp(`^${LEGACY_ADMIN_BASE_PATH.replace('/', '\\/')}(?:\\/|$)`);
+  const legacyRemainder = location.pathname.replace(legacyPrefixPattern, '');
+  const nextPath = adminPortalPath(legacyRemainder);
 
+  return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />;
+}
+
+function App() {
   return (
     <>
       <Analytics />
-      {!preloaderDone && !skipPreloader && (
-        <Preloader
-          onReveal={() => setBackgroundReady(true)}
-          onComplete={() => {
-            markPreloaderComplete();
-            setPreloaderDone(true);
-          }}
-        />
-      )}
       <BrowserRouter>
         <Routes>
           <Route
             path="/"
-            element={
-              <HomePage
-                backgroundReady={backgroundReady}
-                contentReady={preloaderDone}
-              />
-            }
+            element={<HomePage />}
           />
           <Route
             path="/apply"
@@ -289,7 +261,7 @@ function App() {
             )}
           />
           <Route
-            path="/admin/login"
+            path={ADMIN_LOGIN_PATH}
             element={(
               <AdminAuthProvider>
                 <Suspense fallback={<RouteFallback />}>
@@ -299,18 +271,46 @@ function App() {
             )}
           />
           <Route
-            path="/admin"
+            path={ADMIN_RESET_PASSWORD_PATH}
             element={(
               <AdminAuthProvider>
-                <ProtectedAdminRoute />
+                <Suspense fallback={<RouteFallback />}>
+                  <AdminResetPasswordPage />
+                </Suspense>
+              </AdminAuthProvider>
+            )}
+          />
+          <Route
+            path={ADMIN_RECOVERY_PATH}
+            element={(
+              <AdminAuthProvider>
+                <Suspense fallback={<RouteFallback />}>
+                  <AdminRecoveryPage />
+                </Suspense>
+              </AdminAuthProvider>
+            )}
+          />
+          <Route
+            path={ADMIN_PORTAL_BASE_PATH}
+            element={(
+              <AdminAuthProvider>
+                <Suspense fallback={<RouteFallback />}>
+                  <ProtectedAdminRoute />
+                </Suspense>
               </AdminAuthProvider>
             )}
           >
-            <Route element={<AdminLayout />}>
+            <Route
+              element={(
+                <Suspense fallback={null}>
+                  <AdminLayout />
+                </Suspense>
+              )}
+            >
               <Route
                 index
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminDashboardPage />
                   </Suspense>
                 )}
@@ -318,7 +318,7 @@ function App() {
               <Route
                 path="members"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminMembersPage />
                   </Suspense>
                 )}
@@ -326,7 +326,7 @@ function App() {
               <Route
                 path="projects"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminProjectsPage />
                   </Suspense>
                 )}
@@ -334,7 +334,7 @@ function App() {
               <Route
                 path="journey"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminJourneyPage />
                   </Suspense>
                 )}
@@ -342,7 +342,7 @@ function App() {
               <Route
                 path="faqs"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminFaqPage />
                   </Suspense>
                 )}
@@ -350,7 +350,7 @@ function App() {
               <Route
                 path="settings"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminSettingsPage />
                   </Suspense>
                 )}
@@ -358,15 +358,23 @@ function App() {
               <Route
                 path="media"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminMediaPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="applications"
+                element={(
+                  <Suspense fallback={null}>
+                    <AdminApplicationsPage />
                   </Suspense>
                 )}
               />
               <Route
                 path="activity"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminActivityPage />
                   </Suspense>
                 )}
@@ -374,13 +382,17 @@ function App() {
               <Route
                 path="account"
                 element={(
-                  <Suspense fallback={<RouteFallback />}>
+                  <Suspense fallback={null}>
                     <AdminAccountPage />
                   </Suspense>
                 )}
               />
             </Route>
           </Route>
+          <Route
+            path={`${LEGACY_ADMIN_BASE_PATH}/*`}
+            element={<LegacyAdminRedirect />}
+          />
         </Routes>
       </BrowserRouter>
     </>

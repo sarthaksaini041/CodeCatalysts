@@ -15,6 +15,7 @@ import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { faqItems } from '../../data';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { showAdminToast } from '../../lib/adminToast';
 import { siteSectionsAdminService } from '../../services/adminContentService';
 import { moveItem, normalizeNullableString, slugify, toDisplayOrder } from '../../utils/content';
 
@@ -411,6 +412,14 @@ export default function AdminSectionsPage({ faqOnly = false }) {
       setIsSectionEditorOpen(false);
       setStatusTone('info');
       setStatusMessage(selectedSection ? 'Section updated successfully.' : 'Section created successfully.');
+
+      if (!selectedSection) {
+        showAdminToast({
+          title: 'New section created',
+          message: `${payload.label} was added successfully.`,
+        });
+      }
+
       setSelectedSectionId(savedSection.id);
       setSectionForm(mapSectionToForm(savedSection));
       setSectionKeyTouched(true);
@@ -555,6 +564,14 @@ export default function AdminSectionsPage({ faqOnly = false }) {
       await persistSectionItems(nextItems);
       setStatusTone('info');
       setStatusMessage(editingItem ? 'Item updated successfully.' : 'Item created successfully.');
+
+      if (!editingItem) {
+        showAdminToast({
+          title: sectionForm.layout_type === 'faq' ? 'New question created' : 'New item created',
+          message: `${nextItem.title} was added successfully.`,
+        });
+      }
+
       resetItemForm();
     } catch (saveError) {
       setStatusTone('error');

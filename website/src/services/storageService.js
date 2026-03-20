@@ -10,7 +10,7 @@ const ALLOWED_IMAGE_TYPES = new Set([
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MEDIA_PREFIXES = ['members', 'projects', 'site-assets'];
-const STATIC_SITE_MEDIA_PATHS = ['site-assets/favicon.ico', 'site-assets/icon.png'];
+const STATIC_SITE_MEDIA_PATHS = ['site-assets/logo.png'];
 const IMAGE_PATH_PATTERN = /\.(avif|gif|ico|jpe?g|png|svg|webp)$/i;
 
 function isStorageFolderEntry(item) {

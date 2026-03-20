@@ -39,6 +39,55 @@ export async function signOutAdmin() {
   }
 }
 
+export async function requestAdminPasswordReset(email, redirectTo) {
+  const client = requireSupabaseBrowserClient();
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function connectAdminRecoverySessionFromUrl() {
+  if (!hasSupabaseBrowserConfig || typeof window === 'undefined') {
+    return false;
+  }
+
+  const client = requireSupabaseBrowserClient();
+  const url = new URL(window.location.href);
+  const authCode = url.searchParams.get('code');
+
+  if (authCode) {
+    const { error } = await client.auth.exchangeCodeForSession(authCode);
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  }
+
+  const tokenHash = url.searchParams.get('token_hash');
+  const recoveryType = url.searchParams.get('type');
+
+  if (tokenHash && recoveryType === 'recovery') {
+    const { error } = await client.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'recovery',
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 export async function updateAdminPassword(password) {
   const client = requireSupabaseBrowserClient();
   const { data, error } = await client.auth.updateUser({ password });

@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowUpRight, Github, Globe, Rocket, Sparkles, SquareKanban } from 'lucide-react';
 import { usePublicContent } from '../context/PublicContentContext';
 
-function ProjectLinks({ project }) {
+const ProjectLinks = React.memo(function ProjectLinks({ project }) {
   const links = [
     project.liveUrl ? { href: project.liveUrl, label: 'Live', icon: Globe } : null,
     project.githubUrl ? { href: project.githubUrl, label: 'Code', icon: Github } : null,
@@ -13,7 +13,7 @@ function ProjectLinks({ project }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '0.7rem', flexWrap: 'wrap', marginTop: '1.2rem' }}>
+    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
       {links.map(({ href, label, icon: Icon }) => (
         <a
           key={label}
@@ -22,14 +22,108 @@ function ProjectLinks({ project }) {
           rel="noopener noreferrer"
           className="project-link"
         >
-          <Icon size={15} />
+          <Icon size={14} />
           <span>{label}</span>
           <ArrowUpRight size={14} />
         </a>
       ))}
     </div>
   );
-}
+});
+
+const ProjectCard = React.memo(function ProjectCard({ project }) {
+  const cardRef = React.useRef(null);
+  const frameRef = React.useRef(null);
+  const pointerRef = React.useRef({ x: 0, y: 0 });
+
+  React.useEffect(() => () => {
+    if (frameRef.current !== null) {
+      window.cancelAnimationFrame(frameRef.current);
+    }
+  }, []);
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+    pointerRef.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+
+    if (frameRef.current !== null) {
+      return;
+    }
+
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      if (!cardRef.current) return;
+      cardRef.current.style.setProperty('--mouse-x', `${pointerRef.current.x}px`);
+      cardRef.current.style.setProperty('--mouse-y', `${pointerRef.current.y}px`);
+    });
+  };
+
+  return (
+    <article
+      ref={cardRef}
+      className="project-card premium-glass-card"
+      onMouseMove={handleMouseMove}
+      style={{
+        '--mouse-x': '50%',
+        '--mouse-y': '50%',
+        '--project-color': project.featured ? 'rgba(0, 212, 255, 1)' : 'rgba(127, 108, 255, 1)'
+      }}
+    >
+      <div className="project-card-spotlight" />
+      <div className="project-card-border" />
+      <div className="project-card-inner">
+        <div className="project-image-wrapper">
+          {project.image ? (
+            <img src={project.image} alt={project.title} loading="lazy" />
+          ) : (
+            <div className="project-image-fallback">
+              <SquareKanban size={40} />
+            </div>
+          )}
+          <div className="project-image-overlay" />
+          <div className="project-badges">
+            {project.featured && (
+              <span className="project-badge highlighted">
+                <Sparkles size={13} />
+                <span>Featured</span>
+              </span>
+            )}
+            {project.category && <span className="project-badge">{project.category}</span>}
+          </div>
+        </div>
+
+        <div className="project-content">
+          <div className="project-header">
+            <h3 className="project-title">{project.title}</h3>
+            {project.status && <span className="project-status">{project.status}</span>}
+          </div>
+          
+          <p className="project-description">
+            {project.shortDescription}
+          </p>
+
+          {project.techStack?.length > 0 && (
+            <div className="project-tech-stack">
+              {project.techStack.slice(0, 5).map((item) => (
+                <span key={item} className="project-chip">{item}</span>
+              ))}
+            </div>
+          )}
+
+          <div style={{ flexGrow: 1 }} />
+          <div className="project-footer">
+            <ProjectLinks project={project} />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+});
 
 const Projects = () => {
   const { projects, loading } = usePublicContent();
@@ -37,7 +131,7 @@ const Projects = () => {
   return (
     <section className="section" style={{ background: 'transparent' }}>
       <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <div className="section-intro-shell" style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <div className="kicker-badge">
               Projects
@@ -46,8 +140,8 @@ const Projects = () => {
           <h2 className="heading-lg" style={{ marginBottom: '1rem' }}>
             Things we've <span className="text-gradient">built</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem' }}>
-            Live project cards managed from the admin portal and published straight from Supabase.
+          <p className="section-intro-copy" style={{ maxWidth: '560px', margin: '0 auto', fontSize: '1.05rem', lineHeight: 1.6 }}>
+            Explore the applications, interfaces, and platforms we've crafted to inspire and innovate.
           </p>
         </div>
 
@@ -111,80 +205,15 @@ const Projects = () => {
             </div>
           </div>
         ) : (
-          <div className="adaptive-card-grid" style={{ alignItems: 'stretch' }}>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2.5rem',
+            justifyContent: 'center',
+            alignItems: 'stretch'
+          }}>
             {projects.map((project) => (
-              <article key={project.id || project.slug} className="static-texture-card rough-gradient-card project-card" style={{
-                '--card-bg-start': 'rgba(18, 24, 48, 0.96)',
-                '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
-                '--card-glow-a': project.featured ? 'rgba(0, 212, 255, 0.22)' : 'rgba(127, 108, 255, 0.12)',
-                '--card-glow-b': project.featured ? 'rgba(245, 158, 11, 0.18)' : 'rgba(0, 212, 255, 0.12)',
-                padding: 0,
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-              }}>
-                <div style={{
-                  position: 'relative',
-                  minHeight: '220px',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))',
-                  overflow: 'hidden',
-                }}>
-                  {project.image ? (
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ minHeight: '220px', display: 'grid', placeItems: 'center', color: 'var(--neon-cyan)' }}>
-                      <SquareKanban size={40} />
-                    </div>
-                  )}
-
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(180deg, rgba(3, 6, 16, 0.04) 0%, rgba(3, 6, 16, 0.28) 55%, rgba(3, 6, 16, 0.88) 100%)',
-                  }} />
-
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    left: '1rem',
-                    display: 'flex',
-                    gap: '0.55rem',
-                    flexWrap: 'wrap',
-                  }}>
-                    {project.featured ? (
-                      <span className="project-badge">
-                        <Sparkles size={13} />
-                        <span>Featured</span>
-                      </span>
-                    ) : null}
-                    {project.category ? <span className="project-badge muted">{project.category}</span> : null}
-                  </div>
-                </div>
-
-                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.8rem', alignItems: 'flex-start' }}>
-                    <h3 className="heading-md" style={{ fontSize: '1.3rem' }}>{project.title}</h3>
-                    {project.status ? <span className="project-status">{project.status}</span> : null}
-                  </div>
-
-                  <p style={{ color: 'var(--text-secondary)', marginTop: '0.9rem', lineHeight: 1.7 }}>
-                    {project.shortDescription}
-                  </p>
-
-                  {project.techStack?.length > 0 ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1.2rem' }}>
-                      {project.techStack.slice(0, 5).map((item) => (
-                        <span key={item} className="project-chip">{item}</span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <ProjectLinks project={project} />
-                </div>
-              </article>
+              <ProjectCard key={project.id || project.slug} project={project} />
             ))}
           </div>
         )}
@@ -196,73 +225,265 @@ const Projects = () => {
           50% { opacity: 0.4; transform: scale(0.8); }
         }
 
-        .project-card img {
-          transition: transform 0.45s ease;
+        .premium-glass-card {
+          position: relative;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -24%), rgba(238, 254, 255, calc(0.05 + (var(--surface-light-strength, 0.34) * 0.16))) 0%, rgba(122, 238, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.38))) 18%, transparent 56%),
+            rgba(8, 12, 24, 0.4);
+          border-radius: 20px;
+          display: flex;
+          flex-direction: column;
+          isolation: isolate;
+          overflow: hidden;
+          width: 100%;
+          max-width: 420px;
+          flex: 1 1 340px;
+          box-shadow:
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 24px) var(--surface-shadow-blur, 42px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.12)),
+            calc(var(--surface-shadow-x, 0px) * 0.45) calc(var(--surface-shadow-y, 24px) * 0.52) calc(var(--surface-shadow-blur, 42px) * 0.56) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.44)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.04 + (var(--surface-edge-opacity, 0.08) * 0.7))),
+            inset 0 -22px 36px rgba(0, 0, 0, calc(var(--surface-occlusion-opacity, 0.14) * 0.82));
+          transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
         }
 
-        .project-card:hover img {
-          transform: scale(1.04);
+        .premium-glass-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.06 + (var(--surface-light-strength, 0.34) * 0.16))) 0%, rgba(142, 240, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.32))) 18%, transparent 44%),
+            linear-gradient(180deg, rgba(196, 252, 255, calc(0.05 + (var(--surface-sheen-opacity, 0.08) * 0.74))) 0%, rgba(108, 232, 255, calc(0.02 + (var(--surface-sheen-opacity, 0.08) * 0.34))) 16%, transparent 34%);
+          pointer-events: none;
+          z-index: 1;
+          opacity: 0.95;
+          mix-blend-mode: screen;
+        }
+
+        .premium-glass-card:hover {
+          transform: translateY(-4px) scale(1.01);
+          box-shadow:
+            var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 24px) + 8px) calc(var(--surface-shadow-blur, 42px) + 10px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.16)),
+            calc(var(--surface-shadow-x, 0px) * 0.45) calc(var(--surface-shadow-y, 24px) * 0.58) calc(var(--surface-shadow-blur, 42px) * 0.6) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.5)),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .project-card-spotlight {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(
+            800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            rgba(255, 255, 255, 0.04),
+            transparent 40%
+          );
+          z-index: 1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.5s ease;
+        }
+
+        .premium-glass-card:hover .project-card-spotlight {
+          opacity: 1;
+        }
+
+        .project-card-border {
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: radial-gradient(
+            400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            var(--project-color),
+            transparent 40%
+          );
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.5s ease;
+          z-index: 2;
+        }
+
+        .premium-glass-card:hover .project-card-border {
+          opacity: 0.6;
+        }
+
+        .project-card-inner {
+          position: relative;
+          z-index: 3;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          background:
+            linear-gradient(180deg, rgba(196, 252, 255, 0.08) 0%, rgba(16, 20, 36, 0.16) 14%, rgba(8, 10, 20, 0.6) 100%);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-radius: inherit;
+        }
+
+        .project-image-wrapper {
+          position: relative;
+          height: 240px;
+          padding: 1rem;
+          overflow: hidden;
+        }
+
+        .project-image-wrapper img, .project-image-fallback {
+          width: 100%;
+          height: 100%;
+          border-radius: 12px;
+          object-fit: cover;
+          transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+          background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+        }
+
+        .project-image-fallback {
+          display: grid;
+          place-items: center;
+          color: rgba(0, 212, 255, 0.6);
+        }
+
+        .premium-glass-card:hover .project-image-wrapper img {
+          transform: scale(1.06);
+        }
+
+        .project-image-overlay {
+          position: absolute;
+          inset: 1rem;
+          border-radius: 12px;
+          background: linear-gradient(180deg, transparent 40%, rgba(4, 6, 14, 0.9) 100%);
+          pointer-events: none;
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .project-badges {
+          position: absolute;
+          bottom: 1.8rem;
+          left: 1.8rem;
+          display: flex;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          z-index: 10;
         }
 
         .project-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          padding: 0.38rem 0.7rem;
+          gap: 0.35rem;
+          padding: 0.35rem 0.75rem;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.12);
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          color: #fff;
-          font-size: 0.78rem;
-          font-weight: 600;
+          background: rgba(8, 14, 28, 0.65);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: rgba(220, 230, 255, 0.9);
+          font-size: 0.75rem;
+          font-weight: 500;
           backdrop-filter: blur(12px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        .project-badge.muted {
-          color: rgba(228, 233, 244, 0.88);
+        .project-badge.highlighted {
+          background: rgba(0, 212, 255, 0.1);
+          border-color: rgba(0, 212, 255, 0.3);
+          color: #5ed6ff;
+          box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .project-content {
+          padding: 0.5rem 1.8rem 1.8rem 1.8rem;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+
+        .project-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+          margin-bottom: 0.8rem;
+        }
+
+        .project-title {
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: -0.02em;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
         .project-status {
           display: inline-flex;
           align-items: center;
-          padding: 0.34rem 0.72rem;
-          border-radius: 999px;
-          background: rgba(0, 212, 255, 0.08);
-          border: 1px solid rgba(0, 212, 255, 0.16);
-          color: var(--neon-cyan);
-          font-size: 0.76rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
+          padding: 0.3rem 0.6rem;
+          border-radius: 6px;
+          background: rgba(125, 108, 255, 0.1);
+          border: 1px solid rgba(125, 108, 255, 0.25);
+          color: #a797ff;
+          font-size: 0.7rem;
+          font-weight: 600;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
+        }
+
+        .project-description {
+          color: rgba(180, 195, 220, 0.85);
+          font-size: 0.95rem;
+          line-height: 1.6;
+          margin-bottom: 1.5rem;
+        }
+
+        .project-tech-stack {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
         }
 
         .project-chip {
           display: inline-flex;
           align-items: center;
-          padding: 0.38rem 0.72rem;
+          padding: 0.3rem 0.7rem;
           border-radius: 999px;
-          background: rgba(255,255,255,.04);
-          border: 1px solid rgba(255,255,255,.08);
-          color: rgba(228,233,244,.86);
-          font-size: 0.8rem;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -20%), rgba(255, 255, 255, calc(0.02 + (var(--surface-light-strength, 0.34) * 0.08))) 0%, transparent 58%),
+            rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          color: rgba(180, 195, 220, 0.75);
+          font-size: 0.75rem;
+          transition: all 0.3s ease;
+        }
+
+        .premium-glass-card:hover .project-chip {
+          border-color: rgba(255, 255, 255, 0.12);
+          color: rgba(220, 230, 255, 0.9);
         }
 
         .project-link {
           display: inline-flex;
           align-items: center;
-          gap: 0.45rem;
-          padding: 0.72rem 0.92rem;
-          border-radius: 14px;
-          border: 1px solid rgba(255,255,255,.08);
-          background: rgba(255,255,255,.04);
-          color: #eef5ff;
-          font-weight: 600;
+          gap: 0.4rem;
+          padding: 0.5rem 1rem;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -20%), rgba(236, 253, 255, calc(0.03 + (var(--surface-light-strength, 0.34) * 0.12))) 0%, transparent 58%),
+            rgba(0, 212, 255, 0.06);
+          border: 1px solid rgba(0, 212, 255, 0.15);
+          color: #5ed6ff;
+          font-size: 0.85rem;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          box-shadow:
+            var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 18px) * 0.42) calc(var(--surface-shadow-blur, 30px) * 0.38) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.32)),
+            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.32)));
         }
 
         .project-link:hover {
-          border-color: rgba(0,212,255,.24);
-          background: rgba(0,212,255,.08);
+          background: rgba(0, 212, 255, 0.12);
+          border-color: rgba(0, 212, 255, 0.35);
           color: #fff;
+          box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
         }
       `}</style>
     </section>

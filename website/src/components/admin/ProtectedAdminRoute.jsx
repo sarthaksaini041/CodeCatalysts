@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { ADMIN_LOGIN_PATH } from '../../lib/adminPortalRoutes';
 
 function LoadingView() {
   return (
@@ -25,7 +26,7 @@ export default function ProtectedAdminRoute() {
   if (!isAdmin) {
     return (
       <Navigate
-        to="/admin/login"
+        to={ADMIN_LOGIN_PATH}
         replace
         state={{ from: `${location.pathname}${location.search}` }}
       />

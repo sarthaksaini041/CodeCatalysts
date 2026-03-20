@@ -25,8 +25,10 @@ export default function ConfirmDialog({
         aria-labelledby="admin-confirm-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <h3 id="admin-confirm-title">{title}</h3>
-        <p>{description}</p>
+        <div className="admin-dialog-body">
+          <h3 id="admin-confirm-title">{title}</h3>
+          <p>{description}</p>
+        </div>
         <div className="admin-dialog-actions">
           <button type="button" className="admin-button admin-button-ghost" onClick={onCancel}>
             {cancelLabel}

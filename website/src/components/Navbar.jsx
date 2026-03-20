@@ -1,96 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  CircleHelp,
+  Compass,
+  FolderOpen,
+  Info,
+  Menu,
+  Users,
+  X,
+} from 'lucide-react';
+import { scrollToAnchor } from '../lib/smoothScroll';
+import { SITE_LOGO_ALT, SITE_LOGO_SRC } from '../lib/brandAssets';
 
-const CC_LOGO_PATH = "M349.00004,682.42774 c 27.6132,-4.01546 53.6308,-13.54456 79.0271,-28.9442 18.8469,-11.42825 19.1581,-11.69871 75.9729,-66.02338 35.7334,-34.16728 46.6642,-44.05234 56.1484,-50.77691 7.7963,-5.52772 21.8761,-12.30273 33.8516,-16.28889 10.8249,-3.60319 13.4439,-6.02164 12.6926,-11.72038 -0.7419,-5.62744 -5.3888,-9.55299 -16.5268,-13.96136 -30.0508,-11.89397 -67.7452,-15.02823 -91.7117,-7.62575 -7.9491,2.45525 -8.8455,3.20213 -43.1768,35.97496 -51.9637,49.60487 -57.7405,54.37042 -78.8497,65.04647 -26.7407,13.52422 -56.6901,16.83349 -85.7139,9.47099 -39.4608,-10.01006 -70.2017,-41.91138 -80.4311,-83.46724 -2.2718,-9.22908 -2.6034,-12.63202 -2.5449,-26.11205 0.059,-13.45911 0.4163,-16.81207 2.7174,-25.46483 9.2081,-34.62534 33.4969,-62.12492 67.2475,-76.13728 22.4194,-9.30797 51.0692,-10.94006 75.1228,-4.27951 16.2852,4.50946 34.1091,14.10538 48.3561,26.03362 l 4.8073,4.0249 4.0442,-3.20308 c 5.9458,-4.70913 52.2397,-49.25745 52.7274,-50.73918 0.5576,-1.69429 -12.2554,-14.87314 -22.5978,-23.24296 -20.657,-16.71714 -52.4027,-31.41578 -79.6626,-36.88474 -49.4938,-9.92957 -101.4605,-1.11442 -143.5,24.34203 -32.5065,19.68381 -59.3344,49.21421 -75.905,83.55103 -45.678802,94.65394 -6.4168,209.81818 87.5502,256.80427 25.2892,12.64529 46.3821,18.49903 77.8548,21.60638 7.2578,0.71658 31.8156,-0.4292 42.5,-1.98291 z m 313.3928,0.0846 c 51.1335,-7.78556 95.1485,-33.72244 127.0211,-74.85006 22.9334,-29.59276 35.9383,-63.7599 38.7882,-101.90654 3.4238,-45.82739 -8.0091,-88.45242 -34.2665,-127.7557 -6.2537,-9.36077 -11.6264,-15.79072 -21.3933,-25.60321 -20.357,-20.45205 -39.5117,-33.64703 -62.6336,-43.1462 -63.7134,-26.17539 -133.2676,-17.56162 -188.5969,23.35636 -7.798,5.76692 -31.2381,27.70252 -68.2981,63.91444 -30.5245,29.82591 -40.3163,37.39535 -62.5137,48.32527 -13.8136,6.80173 -26.5019,11.1533 -32.521,11.1533 -2.5551,0 -4.9249,0.27917 -5.2661,0.62039 -0.7471,0.74713 5.4459,10.7344 9.1443,14.74666 8.4269,9.14202 23.807,17.96839 37.6428,21.60246 17.9262,4.70848 35.1662,4.68542 54,-0.0722 16.4212,-4.14824 20.9399,-7.14583 42,-27.8619 50.9446,-50.11241 62.6477,-60.39846 80,-70.31342 9.9791,-5.70199 26.3453,-11.94427 37.5,-14.30294 10.0414,-2.12328 30.2698,-2.39962 39.7875,-0.54355 22.0185,4.29394 46.0361,17.44567 60.614,33.19152 31.4854,34.00805 38.9804,85.05696 18.7096,127.43303 -19.3173,40.38266 -62.5171,64.76429 -107.1598,60.48013 -22.7723,-2.18536 -41.0434,-9.60405 -60.7097,-24.65021 l -8.2584,-6.31826 -17.2416,16.68805 c -31.9572,30.93112 -36.8637,35.79154 -38.7733,38.40891 l -1.9032,2.60861 10.0284,8.86549 c 13.6871,12.09984 24.2926,19.47271 37.9065,26.35214 14.882,7.5203 28.1705,12.44333 43.319,16.04849 10.6451,2.53343 15.55,3.34651 32.681,5.41755 6.3409,0.76657 30.3168,-0.35444 40.3928,-1.8886 z";
-const ANCHOR_INTENT_EVENT = 'codecatalysts:anchor-intent';
+const navLinks = [
+  { name: 'About', href: '#about', icon: Info },
+  { name: 'Team', href: '#team', icon: Users },
+  { name: 'Projects', href: '#projects', icon: FolderOpen },
+  { name: 'Journey', href: '#journey', icon: Compass },
+  { name: 'FAQ', href: '#faq', icon: CircleHelp },
+];
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    let rafId = null;
-
-    const updateScrollState = () => {
-      rafId = null;
-      const nextValue = window.scrollY > 50;
-      setIsScrolled((prev) => (prev === nextValue ? prev : nextValue));
-    };
-
-    const handleScroll = () => {
-      if (rafId !== null) return;
-      rafId = window.requestAnimationFrame(updateScrollState);
-    };
-
-    updateScrollState();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId !== null) {
-        window.cancelAnimationFrame(rafId);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return undefined;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isMobileMenuOpen]);
-
-  const navLinks = [
-    { name: 'About', href: '#about' },
-    { name: 'Team', href: '#team' },
-    { name: 'Projects', href: '#projects' },
-    { name: 'Journey', href: '#journey' },
-    { name: 'FAQ', href: '#faq' },
-    { name: 'Join Us', href: '#join' },
-  ];
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+  const menuPanelRef = useRef(null);
 
   const scrollToTarget = useCallback((href) => {
-    if (href === '#') {
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const targetId = href.replace('#', '');
-    window.dispatchEvent(new CustomEvent(ANCHOR_INTENT_EVENT, { detail: targetId }));
-
-    const target = document.getElementById(targetId);
-    if (!target) return;
-
-    const navElement = document.querySelector('.site-nav');
-    const navHeight = navElement?.getBoundingClientRect().height ?? 88;
-    const top = window.scrollY + target.getBoundingClientRect().top - navHeight - 16;
-
-    window.history.replaceState(null, '', href);
-    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    scrollToAnchor(href);
   }, []);
 
   useEffect(() => {
@@ -103,242 +38,369 @@ const Navbar = () => {
     return () => window.clearTimeout(timer);
   }, [scrollToTarget]);
 
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (menuButtonRef.current?.contains(target) || menuPanelRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [isMenuOpen]);
+
   const handleNavClick = (href) => (event) => {
     event.preventDefault();
-    setIsMobileMenuOpen(false);
+    setIsMenuOpen(false);
     scrollToTarget(href);
   };
 
   return (
-    <nav className="site-nav" data-scrolled={isScrolled || undefined}>
+    <nav className="site-nav">
       <div className="nav-inner">
-        {/* Logo */}
         <a href="#" className="nav-logo" aria-label="Code Catalysts home" onClick={handleNavClick('#')}>
-          <svg viewBox="108 254 722 430" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
-            className="nav-logo-svg" aria-hidden="true">
-            <path d={CC_LOGO_PATH} />
-          </svg>
+          <img src={SITE_LOGO_SRC} alt={SITE_LOGO_ALT} className="nav-logo-image" />
         </a>
 
-        {/* Desktop Nav */}
-        <div className="desktop-nav">
-          <ul className="nav-links">
+        <button
+          ref={menuButtonRef}
+          className="header-menu-toggle"
+          type="button"
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMenuOpen}
+          aria-controls="site-header-menu"
+          onClick={() => setIsMenuOpen((open) => !open)}
+        >
+          <span className="header-menu-label">Menu</span>
+          {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+      </div>
+
+      <div
+        ref={menuPanelRef}
+        id="site-header-menu"
+        className="header-menu-panel"
+        data-open={isMenuOpen || undefined}
+        aria-hidden={!isMenuOpen}
+      >
+        <div className="header-menu-panel-shell">
+          <ul>
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a
-                  href={link.href}
-                  className={`nav-link${link.name === 'Join Us' ? ' nav-link-cta' : ''}`}
-                  onClick={handleNavClick(link.href)}
-                >
-                  {link.name}
+                <a href={link.href} className="header-menu-link" onClick={handleNavClick(link.href)}>
+                  <span className="header-menu-link-symbol" aria-hidden="true">
+                    <link.icon size={16} strokeWidth={2.1} />
+                  </span>
+                  <span className="header-menu-link-label">{link.name}</span>
+                  <span className="header-menu-link-mark" aria-hidden="true">/</span>
                 </a>
               </li>
             ))}
           </ul>
         </div>
-
-        {/* Mobile Toggle */}
-        <button
-          className="mobile-toggle"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="site-mobile-menu"
-        >
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
-
-      <div id="site-mobile-menu" className="mobile-menu" data-open={isMobileMenuOpen || undefined} aria-hidden={!isMobileMenuOpen}>
-          <ul>
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <a
-                  href={link.href}
-                  className={`mobile-link${link.name === 'Join Us' ? ' mobile-link-cta' : ''}`}
-                  onClick={handleNavClick(link.href)}
-                >
-                  {link.name}
-                </a>
-              </li>
-            ))}
-          </ul>
       </div>
 
       <style>{`
         .site-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 100;
           padding: 1rem 0;
-          transition: all 0.45s cubic-bezier(.23,1,.32,1);
-          border-bottom: 1px solid transparent;
-          background: linear-gradient(180deg, rgba(2,2,18,0.72) 0%, rgba(2,2,18,0.38) 58%, rgba(2,2,18,0) 100%);
-        }
-        .site-nav[data-scrolled] {
-          padding: 0.5rem 0;
-          background: rgba(2,2,18,0.82);
-          backdrop-filter: blur(24px) saturate(130%);
-          -webkit-backdrop-filter: blur(24px) saturate(130%);
-          border-bottom-color: rgba(255,255,255,.08);
-          box-shadow: 0 8px 32px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,255,255,.03);
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+          pointer-events: none;
         }
 
         .nav-inner {
-          max-width: 1200px;
+          width: 100%;
           margin: 0 auto;
-          padding: 0 2rem;
+          padding: 0 1.5rem;
           display: flex;
+          align-items: center;
           justify-content: space-between;
-          align-items: center;
+          gap: 1rem;
+          pointer-events: auto;
         }
 
-        /* Logo */
         .nav-logo {
-          width: 40px; height: 40px;
-          display: flex; align-items: center; justify-content: center;
-          border-radius: 12px;
-          background: rgba(0,212,255,.05);
-          border: 1px solid rgba(0,212,255,.1);
-          transition: all 0.3s ease;
-          position: relative;
-        }
-        .nav-logo::after {
-          content: '';
-          position: absolute; inset: -2px;
-          border-radius: 14px;
-          background: linear-gradient(135deg, rgba(0,212,255,.15), rgba(167,139,250,.1));
-          z-index: -1;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .nav-logo:hover {
-          border-color: rgba(0,212,255,.25);
-          background: rgba(0,212,255,.08);
-          box-shadow: 0 0 20px rgba(0,212,255,.1);
-        }
-        .nav-logo:hover::after { opacity: 1; }
-        .nav-logo-svg {
-          width: 22px; height: 18px;
-          color: var(--neon-cyan);
-        }
-
-        /* Desktop links */
-        .desktop-nav { display: none; }
-        .nav-links {
+          width: 48px;
+          height: 48px;
           display: flex;
           align-items: center;
-          gap: 0.3rem;
-          padding: 0.35rem;
-          border-radius: 14px;
-          background: rgba(8, 12, 30, 0.52);
-          border: 1px solid rgba(255,255,255,.08);
+          justify-content: center;
+          border-radius: 16px;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -28%), rgba(236, 253, 255, calc(0.07 + (var(--surface-light-strength, 0.3) * 0.14))) 0%, rgba(120, 238, 255, calc(0.04 + (var(--surface-glow-opacity, 0.12) * 0.28))) 24%, transparent 62%),
+            linear-gradient(180deg, rgba(14, 22, 38, 0.56) 0%, rgba(8, 14, 28, 0.42) 100%);
+          border: 1px solid rgba(170, 242, 255, 0.12);
+          box-shadow:
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 18px) var(--surface-shadow-blur, 30px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.22) + 0.06)),
+            inset 0 1px 0 rgba(236, 253, 255, calc(0.04 + (var(--surface-edge-opacity, 0.08) * 0.56)));
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+        }
+
+        .nav-logo:hover {
+          transform: translateY(-1px);
+          border-color: rgba(170, 242, 255, 0.2);
+          box-shadow:
+            0 18px 32px rgba(0, 0, 0, 0.26),
+            0 0 18px rgba(72, 222, 244, 0.12),
+            inset 0 1px 0 rgba(236, 253, 255, 0.16);
+        }
+
+        .nav-logo-image {
+          width: 26px;
+          height: 26px;
+          object-fit: cover;
+          border-radius: 8px;
+          display: block;
+        }
+
+        .header-menu-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.65rem;
+          min-width: 118px;
+          height: 48px;
+          padding: 0 1rem 0 1.15rem;
+          border: 1px solid rgba(200, 248, 255, 0.12);
+          border-radius: 999px;
+          background:
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -30%), rgba(236, 253, 255, calc(0.05 + (var(--surface-light-strength, 0.3) * 0.14))) 0%, rgba(120, 238, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.22))) 22%, transparent 62%),
+            linear-gradient(180deg, rgba(14, 22, 38, 0.58) 0%, rgba(8, 14, 28, 0.42) 100%);
+          color: rgba(227, 235, 245, 0.86);
+          box-shadow:
+            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 20px) var(--surface-shadow-blur, 34px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.22) + 0.08)),
+            inset 0 1px 0 rgba(236, 253, 255, calc(0.04 + (var(--surface-edge-opacity, 0.08) * 0.6)));
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          box-shadow: 0 14px 34px rgba(0,0,0,.24);
-        }
-        .nav-link {
-          font-size: 0.88rem;
-          font-weight: 600;
-          color: rgba(236, 241, 252, 0.92);
-          padding: 0.45rem 1rem;
-          border-radius: 10px;
-          transition: all 0.25s ease;
-          letter-spacing: 0.02em;
-          position: relative;
-          text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
-        }
-        .nav-link:hover {
-          color: #fff;
-          background: rgba(255,255,255,.08);
-        }
-        .nav-link-cta {
-          color: #041a2b;
-          background: linear-gradient(100deg, #2ae8ff 0%, #4acfff 40%, #7d6cff 100%);
-          border: 1px solid rgba(120, 225, 255, 0.45);
-          box-shadow: 0 12px 30px rgba(0, 212, 255, 0.22), 0 8px 22px rgba(125, 108, 255, 0.18);
-          text-shadow: none;
-        }
-        .nav-link-cta:hover {
-          color: #03131e;
-          background: linear-gradient(100deg, #49eeff 0%, #62d7ff 40%, #9279ff 100%);
-          box-shadow: 0 16px 34px rgba(0, 212, 255, 0.28), 0 10px 28px rgba(125, 108, 255, 0.22);
-          transform: translateY(-1px);
-        }
-
-        /* Mobile */
-        .mobile-toggle {
-          width: 38px; height: 38px;
-          display: flex; align-items: center; justify-content: center;
-          background: rgba(255,255,255,.03);
-          border: 1px solid rgba(255,255,255,.06);
-          border-radius: 10px;
-          color: rgba(200,210,225,.7);
           cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .mobile-toggle:hover {
-          border-color: rgba(0,212,255,.2);
-          color: var(--neon-cyan);
+          transition:
+            transform 0.28s ease,
+            border-color 0.28s ease,
+            box-shadow 0.28s ease,
+            color 0.28s ease,
+            background 0.28s ease;
+          pointer-events: auto;
         }
 
-        .mobile-menu {
-          position: absolute; top: 100%; left: 0; right: 0;
-          background: rgba(4,4,16,0.97);
-          backdrop-filter: blur(24px);
-          padding: 0 1.5rem;
-          max-height: 0;
-          overflow: hidden;
+        .header-menu-toggle:hover,
+        .header-menu-toggle[aria-expanded='true'] {
+          transform: translateY(-1px);
+          border-color: rgba(200, 248, 255, 0.2);
+          color: #f4fbff;
+          box-shadow:
+            0 20px 36px rgba(0, 0, 0, 0.28),
+            0 0 24px rgba(84, 234, 255, 0.14),
+            inset 0 1px 0 rgba(236, 253, 255, 0.18);
+        }
+
+        .header-menu-label {
+          font-size: 0.76rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .header-menu-panel {
+          position: absolute;
+          top: calc(100% + 0.34rem);
+          right: 1.5rem;
+          width: min(316px, calc(100vw - 2rem));
+          padding: 0.8rem;
+          border-radius: 28px;
+          background:
+            radial-gradient(circle at top center, rgba(196, 252, 255, 0.1) 0%, rgba(82, 228, 244, 0.05) 18%, transparent 56%),
+            linear-gradient(180deg, rgba(10, 16, 28, 0.86) 0%, rgba(6, 12, 22, 0.94) 100%);
+          border: 1px solid rgba(200, 248, 255, 0.12);
+          box-shadow:
+            0 28px 64px rgba(0, 0, 0, 0.42),
+            0 8px 24px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(236, 253, 255, 0.12),
+            inset 0 -24px 44px rgba(0, 0, 0, 0.18);
+          backdrop-filter: blur(18px) saturate(130%);
+          -webkit-backdrop-filter: blur(18px) saturate(130%);
           opacity: 0;
-          transform: translateY(-12px);
+          transform: translateY(-14px) scale(0.98);
+          transform-origin: top right;
           pointer-events: none;
-          border-bottom: 1px solid transparent;
-          box-shadow: none;
           transition:
             opacity 0.3s ease,
-            transform 0.3s ease,
-            max-height 0.35s ease,
-            padding 0.3s ease,
-            border-color 0.3s ease,
-            box-shadow 0.3s ease;
-        }
-        .mobile-menu[data-open] {
-          padding: 0.8rem 1.5rem 1.5rem;
-          max-height: 420px;
-          opacity: 1;
-          transform: translateY(0);
-          pointer-events: auto;
-          border-bottom-color: rgba(255,255,255,.04);
-          box-shadow: 0 20px 50px rgba(0,0,0,.5);
-        }
-        .mobile-menu ul {
-          display: flex; flex-direction: column; gap: 0.2rem;
-        }
-        .mobile-link {
-          display: block;
-          font-size: 0.95rem; font-weight: 600;
-          color: rgba(236, 241, 252, 0.9);
-          padding: 0.7rem 1rem;
-          border-radius: 10px;
-          transition: all 0.25s ease;
-        }
-        .mobile-link:hover {
-          color: var(--neon-cyan);
-          background: rgba(0,212,255,.07);
-        }
-        .mobile-link-cta {
-          margin-top: 0.35rem;
-          color: #041a2b;
-          background: linear-gradient(100deg, #2ae8ff 0%, #55d8ff 42%, #8a73ff 100%);
-          border: 1px solid rgba(120, 225, 255, 0.4);
-          box-shadow: 0 14px 30px rgba(0, 212, 255, 0.18), 0 8px 20px rgba(125, 108, 255, 0.16);
-        }
-        .mobile-link-cta:hover {
-          color: #03131e;
-          background: linear-gradient(100deg, #4bf0ff 0%, #68ddff 42%, #9a83ff 100%);
+            transform 0.28s ease,
+            box-shadow 0.28s ease;
         }
 
-        @media (min-width: 768px) {
-          .desktop-nav { display: block !important; }
-          .mobile-toggle { display: none !important; }
+        .header-menu-panel[data-open] {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          pointer-events: auto;
+        }
+
+        .header-menu-panel::before,
+        .header-menu-panel::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+        }
+
+        .header-menu-panel::before {
+          inset: 0;
+          border-radius: inherit;
+          background:
+            radial-gradient(circle at top right, rgba(214, 253, 255, 0.08) 0%, rgba(112, 236, 255, 0.03) 26%, transparent 54%);
+          opacity: 0.9;
+        }
+
+        .header-menu-panel::after {
+          inset: 0;
+          background:
+            linear-gradient(180deg, rgba(236, 253, 255, 0.08) 0%, transparent 24%);
+          opacity: 0.65;
+        }
+
+        .header-menu-panel-shell {
+          position: relative;
+          z-index: 1;
+        }
+
+        .header-menu-panel ul {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .header-menu-panel li {
+          width: 100%;
+        }
+
+        .header-menu-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          width: 100%;
+          min-height: 56px;
+          padding: 0.82rem 0.95rem;
+          border-radius: 18px;
+          color: rgba(236, 242, 249, 0.82);
+          font-size: 0.92rem;
+          font-weight: 600;
+          letter-spacing: 0.015em;
+          text-align: left;
+          border: 1px solid rgba(196, 248, 255, 0.05);
+          background:
+            linear-gradient(180deg, rgba(18, 30, 48, 0.42) 0%, rgba(10, 18, 32, 0.58) 100%);
+          box-shadow:
+            inset 0 1px 0 rgba(236, 253, 255, 0.06),
+            0 12px 22px rgba(0, 0, 0, 0.12);
+          transition:
+            background 0.22s ease,
+            color 0.22s ease,
+            border-color 0.22s ease,
+            box-shadow 0.22s ease,
+            transform 0.22s ease;
+        }
+
+        .header-menu-link-symbol {
+          width: 34px;
+          height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at 30% 26%, rgba(226, 254, 255, 0.18) 0%, rgba(126, 244, 255, 0.06) 30%, transparent 70%),
+            linear-gradient(180deg, rgba(16, 28, 46, 0.92) 0%, rgba(8, 16, 28, 0.98) 100%);
+          border: 1px solid rgba(196, 248, 255, 0.08);
+          color: rgba(210, 224, 236, 0.72);
+          flex: 0 0 auto;
+        }
+
+        .header-menu-link-label {
+          flex: 1 1 auto;
+        }
+
+        .header-menu-link-mark {
+          color: rgba(112, 238, 255, 0.68);
+          font-size: 0.88rem;
+        }
+
+        .header-menu-link:hover {
+          color: #f7fcff;
+          border-color: rgba(196, 248, 255, 0.1);
+          background:
+            radial-gradient(circle at top left, rgba(214, 252, 255, 0.12) 0%, rgba(120, 238, 255, 0.04) 28%, transparent 58%),
+            linear-gradient(180deg, rgba(18, 30, 48, 0.72) 0%, rgba(10, 18, 32, 0.84) 100%);
+          box-shadow:
+            0 16px 28px rgba(0, 0, 0, 0.18),
+            0 0 20px rgba(84, 234, 255, 0.05),
+            inset 0 1px 0 rgba(236, 253, 255, 0.08);
+          transform: translateX(2px);
+        }
+
+        @media (max-width: 767px) {
+          .site-nav {
+            padding: 0.9rem 0;
+          }
+
+          .nav-inner {
+            padding: 0 1rem;
+          }
+
+          .header-menu-panel {
+            right: 1rem;
+            width: min(286px, calc(100vw - 1.5rem));
+          }
+
+          .header-menu-toggle {
+            min-width: 108px;
+            padding: 0 0.9rem 0 1rem;
+          }
+
+          .header-menu-link {
+            min-height: 52px;
+            font-size: 0.9rem;
+            padding: 0.76rem 0.88rem;
+          }
+
+          .header-menu-link-symbol {
+            width: 32px;
+            height: 32px;
+          }
+        }
+
+        @media (max-width: 540px) {
+          .header-menu-label {
+            letter-spacing: 0.14em;
+          }
         }
       `}</style>
     </nav>

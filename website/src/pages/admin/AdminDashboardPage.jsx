@@ -23,12 +23,19 @@ import {
   getRecentAdminActivityCount,
 } from '../../services/adminActivityService';
 import { getAdminDisplayName } from '../../utils/adminProfile';
+import {
+  ADMIN_ACTIVITY_PATH,
+  ADMIN_JOURNEY_PATH,
+  ADMIN_MEMBERS_PATH,
+  ADMIN_PROJECTS_PATH,
+  ADMIN_SETTINGS_PATH,
+} from '../../lib/adminPortalRoutes';
 
 const QUICK_ACTIONS = [
-  { to: '/admin/members', label: 'Add Member' },
-  { to: '/admin/projects', label: 'Add Project' },
-  { to: '/admin/journey', label: 'Add Journey Card' },
-  { to: '/admin/settings', label: 'Edit Site Settings' },
+  { to: ADMIN_MEMBERS_PATH, label: 'Add Member' },
+  { to: ADMIN_PROJECTS_PATH, label: 'Add Project' },
+  { to: ADMIN_JOURNEY_PATH, label: 'Add Journey Card' },
+  { to: ADMIN_SETTINGS_PATH, label: 'Edit Site Settings' },
 ];
 
 export default function AdminDashboardPage() {
@@ -119,6 +126,15 @@ export default function AdminDashboardPage() {
       <AdminPageHeader
         title={`Hello, ${adminName}`}
         description="A clear view of your content, visibility, recent edits, and the fastest ways to make changes."
+        actions={(
+          <a
+            href={ADMIN_ACTIVITY_PATH}
+            className="admin-button admin-button-secondary"
+          >
+            <ArrowUpRight size={16} />
+            <span>Open activity</span>
+          </a>
+        )}
       />
 
       {error ? <AdminNotice tone="error">{error}</AdminNotice> : null}
@@ -132,33 +148,44 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <>
-          <section className="admin-stats">
-            <AdminStatCard
-              icon={Users}
-              label="Total Members"
-              value={summary.members.length}
-              featured
-            />
-            <AdminStatCard
-              icon={SquareKanban}
-              label="Total Projects"
-              value={summary.projects.length}
-            />
-            <AdminStatCard
-              icon={Milestone}
-              label="Journey Entries"
-              value={summary.journey.length}
-            />
-            <AdminStatCard
-              icon={Eye}
-              label="Visible vs Hidden"
-              value={`${visibilitySummary.visible}/${visibilitySummary.total || 0}`}
-            />
-            <AdminStatCard
-              icon={Clock3}
-              label="Recent Updates"
-              value={recentUpdateCount}
-            />
+          <section className="admin-card">
+            <div className="admin-card-body">
+              <div className="admin-card-header">
+                <div>
+                  <h2>Dashboard snapshot</h2>
+                  <p>Quick overview of members, projects, visibility, and recent updates.</p>
+                </div>
+              </div>
+
+              <div className="admin-stats">
+                <AdminStatCard
+                  icon={Users}
+                  label="Total Members"
+                  value={summary.members.length}
+                  featured
+                />
+                <AdminStatCard
+                  icon={SquareKanban}
+                  label="Total Projects"
+                  value={summary.projects.length}
+                />
+                <AdminStatCard
+                  icon={Milestone}
+                  label="Journey Entries"
+                  value={summary.journey.length}
+                />
+                <AdminStatCard
+                  icon={Eye}
+                  label="Visible vs Hidden"
+                  value={`${visibilitySummary.visible}/${visibilitySummary.total || 0}`}
+                />
+                <AdminStatCard
+                  icon={Clock3}
+                  label="Recent Updates"
+                  value={recentUpdateCount}
+                />
+              </div>
+            </div>
           </section>
 
           <section className="admin-card">

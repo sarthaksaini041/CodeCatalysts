@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, LockKeyhole, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import AdminField from '../../components/admin/AdminField';
 import AdminNotice from '../../components/admin/AdminNotice';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { SITE_LOGO_ALT, SITE_LOGO_SRC } from '../../lib/brandAssets';
+import { requestAdminPasswordReset } from '../../lib/adminAuth';
+import { ADMIN_PORTAL_BASE_PATH, ADMIN_RECOVERY_PATH } from '../../lib/adminPortalRoutes';
 
 export default function AdminLoginPage() {
   const location = useLocation();
-  const redirectTo = location.state?.from || '/admin';
+  const redirectTo = location.state?.from || ADMIN_PORTAL_BASE_PATH;
   const { signIn, isAdmin, isLoading, error: authError } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
 
   if (isAdmin && !isLoading) {
     return <Navigate to={redirectTo} replace />;
@@ -22,6 +27,7 @@ export default function AdminLoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormError('');
+    setStatusMessage('');
 
     if (!email.trim() || !password.trim()) {
       setFormError('Enter both your admin email and password.');
@@ -39,6 +45,30 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setFormError('');
+    setStatusMessage('');
+
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail) {
+      setFormError('Enter your admin email first, then click Forgot password.');
+      return;
+    }
+
+    setSendingReset(true);
+
+    try {
+      const redirectUrl = new URL(ADMIN_RECOVERY_PATH, window.location.origin).toString();
+      await requestAdminPasswordReset(normalizedEmail, redirectUrl);
+      setStatusMessage('Password reset email sent. Open the latest link to set a new admin password.');
+    } catch (error) {
+      setFormError(error.message || 'Unable to send password reset email.');
+    } finally {
+      setSendingReset(false);
+    }
+  };
+
   return (
     <div className="admin-shell">
       <div className="admin-login-shell">
@@ -46,7 +76,7 @@ export default function AdminLoginPage() {
           <div className="admin-card-body">
             <div style={{ display: 'grid', gap: '0.65rem', marginBottom: '1.25rem' }}>
               <div className="admin-brand-mark">
-                <LockKeyhole size={20} />
+                <img src={SITE_LOGO_SRC} alt={SITE_LOGO_ALT} className="admin-brand-image" />
               </div>
               <h1 style={{ fontSize: '2rem' }}>Admin Login</h1>
               <p className="admin-record-copy">
@@ -56,6 +86,7 @@ export default function AdminLoginPage() {
 
             {authError ? <AdminNotice tone="error">{authError}</AdminNotice> : null}
             {formError ? <AdminNotice tone="error">{formError}</AdminNotice> : null}
+            {statusMessage ? <AdminNotice tone="info">{statusMessage}</AdminNotice> : null}
 
             <form className="admin-form" onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
               <AdminField label="Email" htmlFor="admin-email">
@@ -94,10 +125,22 @@ export default function AdminLoginPage() {
                 </div>
               </AdminField>
 
+              <button
+                type="button"
+                className="admin-button admin-button-ghost"
+                style={{ justifySelf: 'start' }}
+                onClick={handleForgotPassword}
+                disabled={sendingReset || submitting || isLoading}
+              >
+                {sendingReset ? 'Sending reset link...' : 'Forgot password?'}
+              </button>
+
               <div className="admin-form-actions">
-                <Link to="/" className="admin-button admin-button-ghost">
-                  Back to site
-                </Link>
+                <div className="admin-page-toolbar" style={{ marginLeft: 0 }}>
+                  <Link to="/" className="admin-button admin-button-ghost">
+                    Back to site
+                  </Link>
+                </div>
                 <button type="submit" className="admin-button admin-button-primary" disabled={submitting || isLoading}>
                   <LogIn size={16} />
                   <span>{submitting ? 'Signing in...' : 'Sign in'}</span>
