@@ -27,6 +27,7 @@ export const ADMIN_RECOVERY_PATH = adminPortalPath('recovery');
 export const ADMIN_MEMBERS_PATH = adminPortalPath('members');
 export const ADMIN_PROJECTS_PATH = adminPortalPath('projects');
 export const ADMIN_JOURNEY_PATH = adminPortalPath('journey');
+export const ADMIN_SECTIONS_PATH = adminPortalPath('sections');
 export const ADMIN_FAQS_PATH = adminPortalPath('faqs');
 export const ADMIN_MEDIA_PATH = adminPortalPath('media');
 export const ADMIN_SETTINGS_PATH = adminPortalPath('settings');

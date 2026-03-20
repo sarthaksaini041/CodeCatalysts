@@ -59,10 +59,9 @@ The admin portal expects the SQL files in `supabase/migrations` to be applied to
 
 Run the migrations in filename order in the Supabase SQL Editor or with the Supabase CLI. This includes:
 
-- `supabase/migrations/20260319_admin_portal.sql`
-- `supabase/migrations/20260319_admin_portal_extensions.sql`
-- `supabase/migrations/20260319_admin_portal_hardening.sql`
-- `supabase/migrations/20260319_site_sections.sql`
+- `supabase/migrations/20260320_admin_users_management.sql`
+- `supabase/migrations/20260320_application_form_settings.sql`
+- `supabase/migrations/20260320_security_function_search_path.sql`
 
 If `public.site_sections` has not been created yet, the FAQ/sections admin screen will stay unavailable until `20260319_site_sections.sql` is applied.
 

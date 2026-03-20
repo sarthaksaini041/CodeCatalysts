@@ -58,7 +58,7 @@ const Journey = () => {
             <div style={{
               position: 'absolute', top: 0, bottom: 0, left: '20px',
               width: '2px',
-              background: 'linear-gradient(to bottom, var(--neon-cyan), var(--neon-purple), transparent)',
+              background: 'linear-gradient(to bottom, #78c8ff, #4f8dff, transparent)',
               zIndex: 0,
             }} />
 
@@ -73,14 +73,14 @@ const Journey = () => {
                   width: '22px', height: '22px', borderRadius: '50%',
                   background: 'var(--bg-color)',
                   border: '2px solid var(--neon-cyan)',
-                  boxShadow: '0 0 12px rgba(0,212,255,.4)',
+                  boxShadow: '0 0 12px rgba(94,176,255,0.48)',
                 }} />
 
                 <div className="static-texture-card rough-gradient-card" style={{
                   '--card-bg-start': 'rgba(12, 42, 58, 0.96)',
                   '--card-bg-end': 'rgba(8, 10, 22, 0.98)',
-                  '--card-glow-a': 'rgba(34, 211, 238, 0.22)',
-                  '--card-glow-b': 'rgba(167, 139, 250, 0.14)',
+                  '--card-glow-a': 'rgba(98, 178, 255, 0.24)',
+                  '--card-glow-b': 'rgba(82, 124, 255, 0.18)',
                   padding: '1.8rem',
                 }}>
                   <span style={{

@@ -7,26 +7,26 @@ const cardPalettes = [
   {
     '--card-bg-start': 'rgba(16, 30, 56, 0.96)',
     '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
-    '--card-glow-a': 'rgba(0, 212, 255, 0.2)',
-    '--card-glow-b': 'rgba(87, 140, 255, 0.12)',
+    '--card-glow-a': 'rgba(90, 176, 255, 0.2)',
+    '--card-glow-b': 'rgba(87, 140, 255, 0.16)',
   },
   {
-    '--card-bg-start': 'rgba(40, 19, 58, 0.96)',
-    '--card-bg-end': 'rgba(11, 10, 28, 0.98)',
-    '--card-glow-a': 'rgba(167, 139, 250, 0.18)',
-    '--card-glow-b': 'rgba(116, 50, 180, 0.14)',
+    '--card-bg-start': 'rgba(18, 26, 58, 0.96)',
+    '--card-bg-end': 'rgba(10, 12, 30, 0.98)',
+    '--card-glow-a': 'rgba(114, 142, 255, 0.2)',
+    '--card-glow-b': 'rgba(72, 108, 210, 0.16)',
   },
   {
-    '--card-bg-start': 'rgba(14, 36, 44, 0.96)',
+    '--card-bg-start': 'rgba(12, 34, 52, 0.96)',
     '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
-    '--card-glow-a': 'rgba(45, 212, 191, 0.18)',
-    '--card-glow-b': 'rgba(0, 212, 255, 0.12)',
+    '--card-glow-a': 'rgba(72, 168, 255, 0.2)',
+    '--card-glow-b': 'rgba(100, 196, 255, 0.14)',
   },
   {
-    '--card-bg-start': 'rgba(30, 22, 50, 0.96)',
+    '--card-bg-start': 'rgba(20, 24, 52, 0.96)',
     '--card-bg-end': 'rgba(10, 10, 24, 0.98)',
-    '--card-glow-a': 'rgba(244, 114, 182, 0.12)',
-    '--card-glow-b': 'rgba(167, 139, 250, 0.18)',
+    '--card-glow-a': 'rgba(116, 148, 255, 0.16)',
+    '--card-glow-b': 'rgba(88, 124, 236, 0.2)',
   },
 ];
 
@@ -136,8 +136,8 @@ const About = () => {
                     <div style={{
                       width: '46px', height: '46px',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'linear-gradient(180deg, rgba(0,212,255,.08), rgba(255,255,255,.02))',
-                      border: '1px solid rgba(0,212,255,.14)',
+                      background: 'linear-gradient(180deg, rgba(96,180,255,0.14), rgba(255,255,255,.02))',
+                      border: '1px solid rgba(108,176,255,0.28)',
                       borderRadius: '10px', color: 'var(--neon-cyan)',
                     }}>
                       <Icon size={22} />

@@ -151,8 +151,8 @@ const Projects = () => {
               <div key={index} className="static-texture-card rough-gradient-card" style={{
                 '--card-bg-start': 'rgba(18, 24, 48, 0.94)',
                 '--card-bg-end': 'rgba(8, 10, 24, 0.98)',
-                '--card-glow-a': 'rgba(0, 212, 255, 0.14)',
-                '--card-glow-b': 'rgba(127, 108, 255, 0.12)',
+                '--card-glow-a': 'rgba(94, 178, 255, 0.18)',
+                '--card-glow-b': 'rgba(86, 118, 255, 0.14)',
                 minHeight: '420px',
                 opacity: 0.72,
               }} />
@@ -162,8 +162,8 @@ const Projects = () => {
           <div className="static-texture-card rough-gradient-card" style={{
             '--card-bg-start': 'rgba(22, 24, 50, 0.96)',
             '--card-bg-end': 'rgba(10, 8, 22, 0.98)',
-            '--card-glow-a': 'rgba(0, 212, 255, 0.2)',
-            '--card-glow-b': 'rgba(127, 108, 255, 0.18)',
+            '--card-glow-a': 'rgba(94, 178, 255, 0.22)',
+            '--card-glow-b': 'rgba(86, 118, 255, 0.2)',
             textAlign: 'center',
             padding: '4rem 2rem',
             maxWidth: '750px',
@@ -174,8 +174,8 @@ const Projects = () => {
             <div style={{
               width: '64px', height: '64px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'linear-gradient(180deg, rgba(0,212,255,.1), rgba(255,255,255,.02))',
-              border: '1px solid rgba(0,212,255,.16)',
+              background: 'linear-gradient(180deg, rgba(92,174,255,0.14), rgba(255,255,255,.02))',
+              border: '1px solid rgba(114,182,255,0.24)',
               borderRadius: '14px', color: 'var(--neon-cyan)',
               margin: '0 auto 2rem auto',
             }}>
@@ -191,8 +191,8 @@ const Projects = () => {
 
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '8px 18px', background: 'rgba(0,212,255,.04)',
-              border: '1px dashed rgba(0,212,255,.18)', borderRadius: '6px',
+              padding: '8px 18px', background: 'rgba(92,174,255,0.08)',
+              border: '1px dashed rgba(114,182,255,0.3)', borderRadius: '6px',
             }}>
               <div style={{
                 width: '6px', height: '6px', borderRadius: '50%',

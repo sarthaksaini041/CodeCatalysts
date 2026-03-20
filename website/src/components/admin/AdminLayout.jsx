@@ -9,6 +9,7 @@ import {
   DoorOpen,
   Image,
   LayoutDashboard,
+  LayoutTemplate,
   Milestone,
   Search,
   SquareKanban,
@@ -32,6 +33,7 @@ import {
   ADMIN_MEMBERS_PATH,
   ADMIN_PORTAL_BASE_PATH,
   ADMIN_PROJECTS_PATH,
+  ADMIN_SECTIONS_PATH,
   ADMIN_SETTINGS_PATH,
 } from '../../lib/adminPortalRoutes';
 
@@ -40,6 +42,7 @@ const navItems = [
   { to: ADMIN_MEMBERS_PATH, label: 'Team', icon: Users },
   { to: ADMIN_PROJECTS_PATH, label: 'Projects', icon: SquareKanban },
   { to: ADMIN_JOURNEY_PATH, label: 'Journey', icon: Milestone },
+  { to: ADMIN_SECTIONS_PATH, label: 'Sections', icon: LayoutTemplate },
   { to: ADMIN_FAQS_PATH, label: 'FAQs', icon: CircleHelp },
   { to: ADMIN_APPLICATIONS_PATH, label: 'Applications', icon: ClipboardList },
   { to: ADMIN_MEDIA_PATH, label: 'Media', icon: Image },
@@ -81,6 +84,7 @@ export default function AdminLayout() {
     { id: 'section-team', title: 'Team', description: 'Manage members', href: ADMIN_MEMBERS_PATH, type: 'Section', keywords: ['members', 'team'] },
     { id: 'section-projects', title: 'Projects', description: 'Manage projects', href: ADMIN_PROJECTS_PATH, type: 'Section', keywords: ['projects'] },
     { id: 'section-journey', title: 'Journey', description: 'Manage timeline entries', href: ADMIN_JOURNEY_PATH, type: 'Section', keywords: ['journey', 'timeline'] },
+    { id: 'section-sections', title: 'Sections', description: 'Manage homepage content sections', href: ADMIN_SECTIONS_PATH, type: 'Section', keywords: ['sections', 'homepage', 'content'] },
     { id: 'section-faqs', title: 'FAQs', description: 'Manage frequently asked questions', href: ADMIN_FAQS_PATH, type: 'Section', keywords: ['faq', 'questions'] },
     { id: 'section-applications', title: 'Applications', description: 'View apply form submissions', href: ADMIN_APPLICATIONS_PATH, type: 'Section', keywords: ['applications', 'apply', 'submissions'] },
     { id: 'section-media', title: 'Media', description: 'Manage images and assets', href: ADMIN_MEDIA_PATH, type: 'Section', keywords: ['media', 'images', 'assets'] },

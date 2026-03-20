@@ -18,7 +18,6 @@ import {
 
 import { motion } from 'framer-motion';
 
-const LogoBackdrop = lazy(() => import('./components/LogoBackdrop'));
 const Team = lazy(() => import('./components/Team'));
 const Projects = lazy(() => import('./components/Projects'));
 const Journey = lazy(() => import('./components/Journey'));
@@ -32,6 +31,7 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage')
 const AdminMembersPage = lazy(() => import('./pages/admin/AdminMembersPage'));
 const AdminProjectsPage = lazy(() => import('./pages/admin/AdminProjectsPage'));
 const AdminJourneyPage = lazy(() => import('./pages/admin/AdminJourneyPage'));
+const AdminSectionsPage = lazy(() => import('./pages/admin/AdminSectionsPage'));
 const AdminFaqPage = lazy(() => import('./pages/admin/AdminFaqPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 const AdminMediaPage = lazy(() => import('./pages/admin/AdminMediaPage'));
@@ -71,23 +71,13 @@ const fadeUp = {
   },
 };
 
-/* ── Scale-fade (for background) ── */
-const scaleFade = {
-  hidden: { opacity: 0, scale: 1.05 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.2, ease: [0.25, 0.4, 0.25, 1] },
-  },
-};
-
 const sectionFallbackBase = {
   width: '100%',
   maxWidth: '1200px',
   margin: '0 auto',
-  borderRadius: '24px',
-  background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-  border: '1px solid rgba(255,255,255,0.04)',
+  borderRadius: '0px',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)',
+  border: 'none',
   opacity: 0.45,
 };
 
@@ -175,25 +165,11 @@ function HomePage() {
   return (
     <PublicContentProvider>
       <motion.div
+        className="site-continuous"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
-        {/* Background scales in first */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={scaleFade}
-        >
-          <Suspense fallback={null}>
-            <LogoBackdrop
-              logoAnchorSelector='[data-hero-title-stage="true"]'
-              startupFlicker
-              startupFlickerDelayMs={520}
-            />
-          </Suspense>
-        </motion.div>
-
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* Navbar slides down */}
           <motion.div variants={slideDown}>
@@ -336,6 +312,14 @@ function App() {
                 element={(
                   <Suspense fallback={null}>
                     <AdminJourneyPage />
+                  </Suspense>
+                )}
+              />
+              <Route
+                path="sections"
+                element={(
+                  <Suspense fallback={null}>
+                    <AdminSectionsPage />
                   </Suspense>
                 )}
               />

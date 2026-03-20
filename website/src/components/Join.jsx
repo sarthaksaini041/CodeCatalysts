@@ -65,13 +65,13 @@ const Join = () => {
   return (
     <footer style={{
       position: 'relative', overflow: 'hidden',
-      paddingTop: '6rem', paddingBottom: '2rem',
+      paddingTop: '6rem', paddingBottom: '0',
       background: 'transparent',
     }}>
       {/* top gradient line */}
       <div style={{
         position: 'absolute', top: 0, left: '5%', right: '5%', height: '1px',
-        background: 'linear-gradient(90deg, transparent, rgba(0,212,255,.1), rgba(167,139,250,.08), transparent)',
+        background: 'linear-gradient(90deg, transparent, rgba(110,190,255,0.18), rgba(76,120,255,0.14), transparent)',
       }} />
 
       <div className="container" style={{ position: 'relative', zIndex: 10, maxWidth: '1100px', margin: '0 auto', padding: '0 2rem', display: 'flex', flexDirection: 'column' }}>
@@ -178,20 +178,21 @@ const Join = () => {
             </section>
           );
         })() : null}
-      </div>
+      </div>
+
       <div className="footer-stage">
-        <div className="container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 2rem' }}>
-          <div className="footer-panel">
-            <div className="footer-panel-pattern" />
-            <div className="footer-panel-glow footer-panel-glow-left" />
-            <div className="footer-panel-glow footer-panel-glow-right" />
+        <div className="footer-panel">
+          <div className="footer-panel-pattern" />
+          <div className="footer-panel-glow footer-panel-glow-left" />
+          <div className="footer-panel-glow footer-panel-glow-right" />
 
-            <div className="footer-emblem" aria-hidden="true">
-              <div className="footer-emblem-core">
-                <img src={SITE_LOGO_SRC} alt={SITE_LOGO_ALT} className="footer-emblem-image" />
-              </div>
+          <div className="footer-emblem" aria-hidden="true">
+            <div className="footer-emblem-core">
+              <img src={SITE_LOGO_SRC} alt={SITE_LOGO_ALT} className="footer-emblem-image" />
             </div>
+          </div>
 
+          <div className="footer-panel-inner">
             <div className="footer-shell">
               <div className="footer-column footer-contact">
                 <h4 className="footer-heading">Contact</h4>
@@ -272,17 +273,11 @@ const Join = () => {
           margin-bottom: 4rem;
           padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 4vw, 3rem);
           text-align: center;
-          border-radius: 30px;
+          border-radius: 0;
           overflow: hidden;
-          border: 1px solid rgba(98, 176, 255, 0.14);
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -26%), rgba(242, 254, 255, calc(0.05 + (var(--surface-light-strength, 0.34) * 0.16))) 0%, rgba(116, 236, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.38))) 18%, transparent 56%),
-            linear-gradient(180deg, rgba(196, 252, 255, calc(0.03 + (var(--surface-sheen-opacity, 0.08) * 0.6))) 0%, rgba(12, 14, 30, 0.95) 18%, rgba(8, 10, 24, 0.97) 48%, rgba(4, 5, 14, 0.99) 100%);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 28px) var(--surface-shadow-blur, 46px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.14)),
-            calc(var(--surface-shadow-x, 0px) * 0.45) calc(var(--surface-shadow-y, 28px) * 0.52) calc(var(--surface-shadow-blur, 46px) * 0.56) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.42)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.03 + (var(--surface-edge-opacity, 0.08) * 0.56))),
-            inset 0 -24px 44px rgba(0, 0, 0, calc(var(--surface-occlusion-opacity, 0.14) * 0.92));
+          border: 0;
+          background: transparent;
+          box-shadow: none;
         }
         .join-cta-topline {
           position: absolute;
@@ -290,7 +285,7 @@ const Join = () => {
           left: 8%;
           right: 8%;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.52), rgba(167, 139, 250, 0.42), transparent);
+          background: linear-gradient(90deg, transparent, rgba(124, 176, 255, 0.36), transparent);
           opacity: 0.9;
           z-index: 1;
         }
@@ -303,33 +298,30 @@ const Join = () => {
         }
         .join-cta-noise {
           z-index: 0;
-          opacity: 0.14;
+          opacity: 0;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='1'/%3E%3C/svg%3E");
           background-size: 240px 240px;
           mix-blend-mode: soft-light;
         }
         .join-cta-vignette {
           z-index: 0;
-          background:
-            radial-gradient(circle at 50% 26%, rgba(85, 197, 255, 0.12), transparent 24%),
-            radial-gradient(ellipse at 50% 112%, rgba(37, 224, 255, 0.28) 0%, rgba(93, 134, 255, 0.24) 20%, rgba(138, 111, 255, 0.18) 38%, rgba(93, 134, 255, 0.05) 56%, transparent 72%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 18%, rgba(0, 0, 0, 0.18) 100%);
+          background: none;
         }
         .join-cta-glow-top {
           z-index: 0;
           inset: -22% 14% auto;
           height: 52%;
-          background: radial-gradient(circle, rgba(132, 247, 255, 0.24), rgba(0, 212, 255, 0.12) 42%, transparent 70%);
+          background: none;
           filter: blur(56px);
-          opacity: 0.82;
+          opacity: 0;
         }
         .join-cta-glow-bottom {
           z-index: 0;
           inset: auto 8% -22%;
           height: 52%;
-          background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.28), rgba(94, 114, 255, 0.22) 36%, rgba(167, 139, 250, 0.14) 54%, transparent 74%);
+          background: none;
           filter: blur(50px);
-          opacity: 0.95;
+          opacity: 0;
         }
         .join-cta-badge {
           width: 58px;
@@ -448,22 +440,18 @@ const Join = () => {
         .join-faq-shell {
           position: relative;
           overflow: hidden;
-          border-radius: 28px;
-          padding: clamp(1.4rem, 3vw, 2rem);
-          border: 1px solid rgba(103, 170, 255, 0.12);
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -24%), rgba(242, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.12))) 0%, rgba(116, 236, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.26))) 18%, transparent 58%),
-            linear-gradient(180deg, rgba(10, 12, 28, 0.88) 0%, rgba(7, 9, 22, 0.95) 100%);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 22px) var(--surface-shadow-blur, 40px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.08)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.34)));
+          border-radius: 0;
+          padding: clamp(1rem, 2vw, 1.5rem) 0;
+          border: 0;
+          background: transparent;
+          box-shadow: none;
         }
         .join-faq-shell::before {
           content: '';
           position: absolute;
           inset: 0;
           pointer-events: none;
-          opacity: 0.11;
+          opacity: 0;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grainFaq'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grainFaq)' opacity='1'/%3E%3C/svg%3E");
           background-size: 240px 240px;
           mix-blend-mode: soft-light;
@@ -473,9 +461,7 @@ const Join = () => {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          background:
-            radial-gradient(circle at 18% 16%, rgba(0, 212, 255, 0.08), transparent 28%),
-            radial-gradient(circle at 82% 100%, rgba(167, 139, 250, 0.12), transparent 34%);
+          background: none;
         }
         .join-faq-head,
         .join-faq-list {
@@ -519,17 +505,15 @@ const Join = () => {
           gap: 0.6rem;
         }
         .join-faq-item {
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -28%), rgba(255, 255, 255, calc(0.02 + (var(--surface-light-strength, 0.34) * 0.08))) 0%, transparent 56%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
+          border-radius: 10px;
+          border: 1px solid rgba(132, 166, 224, 0.16);
+          background: rgba(10, 18, 36, 0.52);
           transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
         }
         .join-faq-item.is-open {
-          border-color: rgba(94, 186, 255, 0.24);
-          background: linear-gradient(180deg, rgba(0, 212, 255, 0.05) 0%, rgba(167, 139, 250, 0.035) 100%);
-          box-shadow: var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 18px) * 0.54) calc(var(--surface-shadow-blur, 30px) * 0.48) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.36));
+          border-color: rgba(156, 190, 246, 0.28);
+          background: rgba(12, 22, 44, 0.62);
+          box-shadow: none;
         }
         .join-faq-trigger {
           width: 100%;
@@ -574,26 +558,28 @@ const Join = () => {
           color: rgba(194, 208, 233, 0.78);
           font-size: 0.94rem;
           line-height: 1.7;
-        }
+        }
+
         .footer-stage {
           position: relative;
           z-index: 10;
           margin-top: 1.75rem;
-          padding: 2.4rem 0 1.5rem;
+          padding: 2.4rem 0 0;
         }
         .footer-panel {
           position: relative;
           overflow: visible;
-          border-radius: 34px;
-          padding: clamp(3.75rem, 7vw, 5rem) clamp(1.3rem, 4vw, 2.5rem) 1.35rem;
-          border: 1px solid rgba(80, 160, 255, 0.12);
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -26%), rgba(238, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.14))) 0%, rgba(96, 232, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.34))) 18%, transparent 54%),
-            radial-gradient(circle at top center, rgba(0, 212, 255, 0.08), transparent 34%),
-            linear-gradient(180deg, rgba(8, 12, 26, 0.98) 0%, rgba(4, 6, 14, 0.99) 100%);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 28px) var(--surface-shadow-blur, 48px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.14)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.38)));
+          border-radius: 0;
+          width: 100%;
+          padding: clamp(3.75rem, 7vw, 5rem) clamp(0.9rem, 2.6vw, 2rem) 1.35rem;
+          border: 0;
+          border-top: 1px solid rgba(132, 166, 224, 0.2);
+          background: transparent;
+          box-shadow: none;
+        }
+        .footer-panel-inner {
+          width: min(1100px, 100%);
+          margin: 0 auto;
         }
         .footer-panel::after {
           content: '';
@@ -601,12 +587,13 @@ const Join = () => {
           inset: 0;
           border-radius: inherit;
           pointer-events: none;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 14%, rgba(255, 255, 255, 0.02) 100%);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 24%, rgba(255, 255, 255, 0.01) 100%);
         }
         .footer-panel-pattern,
         .footer-panel-glow {
           position: absolute;
           pointer-events: none;
+          opacity: 0;
         }
         .footer-panel-pattern {
           inset: 0;
@@ -902,20 +889,16 @@ const Join = () => {
 
         @media (hover: hover) and (pointer: fine) {
           .join-cta-card:hover {
-            box-shadow:
-              0 34px 80px rgba(0, 0, 0, 0.42),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: none;
           }
           .join-faq-item:hover {
-            border-color: rgba(102, 170, 255, 0.16);
+            border-color: rgba(150, 182, 236, 0.24);
           }
           .join-cta-button:hover {
             transform: translateY(-3px);
             filter: brightness(1.02);
             box-shadow:
-              0 18px 40px rgba(0, 0, 0, 0.28),
-              0 0 38px rgba(56, 199, 255, 0.28),
-              0 16px 32px rgba(110, 80, 255, 0.2),
+              0 12px 22px rgba(0, 0, 0, 0.22),
               inset 0 1px 0 rgba(255, 255, 255, 0.38);
           }
           .join-cta-button:hover .join-cta-button-arrow {
@@ -940,12 +923,12 @@ const Join = () => {
         }
         @media (max-width: 640px) {
           .join-cta-card {
-            border-radius: 24px;
+            border-radius: 0;
             margin-bottom: 3rem;
           }
           .join-faq-shell {
-            border-radius: 22px;
-            padding: 1.2rem;
+            border-radius: 0;
+            padding: 1rem 0;
           }
           .join-faq-trigger {
             padding: 0.9rem 1rem;
@@ -969,7 +952,7 @@ const Join = () => {
             padding-top: 2rem;
           }
           .footer-panel {
-            border-radius: 28px;
+            border-radius: 0;
             padding: 3.25rem 1rem 1.2rem;
           }
           .footer-emblem {

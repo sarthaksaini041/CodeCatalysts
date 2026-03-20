@@ -21,7 +21,6 @@ const LOGO_LIGHT_TARGET_EPSILON = 0.02;
 const SITE_LIGHT_RESPONSE_MS = 280;
 const SITE_LIGHT_SETTLE_THRESHOLD = 0.004;
 const SITE_LIGHT_TARGET_EPSILON = 0.002;
-const STARTUP_LIGHT_FLICKER_MS = 620;
 const STAGE_ANCHOR_RESPONSE_MS = 220;
 const STAGE_ANCHOR_SETTLE_THRESHOLD = 0.5;
 
@@ -104,18 +103,6 @@ const APPLY_FIXED_SITE_LIGHT = {
   shadowStrength: 1.02,
   highlightStrength: 0.9,
 };
-
-const STARTUP_LIGHT_FLICKER_STOPS = [
-  [0, 1],
-  [72, 1],
-  [118, 0.03],
-  [164, 0.96],
-  [232, 1],
-  [286, 0.02],
-  [346, 0.94],
-  [430, 1],
-  [STARTUP_LIGHT_FLICKER_MS, 1],
-];
 
 const SURFACE_LIGHT_SELECTOR = [
   '.hero-title',
@@ -413,37 +400,7 @@ function applySurfaceLighting(element, lightRect, siteLight = DEFAULT_SITE_LIGHT
   element.style.setProperty('--surface-text-glow-opacity', textGlowOpacity.toFixed(3));
 }
 
-function getStartupLightMultiplier(elapsedMs) {
-  if (!Number.isFinite(elapsedMs)) {
-    return 1;
-  }
-
-  if (elapsedMs <= 0) {
-    return STARTUP_LIGHT_FLICKER_STOPS[0][1];
-  }
-
-  if (elapsedMs >= STARTUP_LIGHT_FLICKER_MS) {
-    return 1;
-  }
-
-  for (let index = 0; index < STARTUP_LIGHT_FLICKER_STOPS.length - 1; index += 1) {
-    const [startTime, startValue] = STARTUP_LIGHT_FLICKER_STOPS[index];
-    const [endTime, endValue] = STARTUP_LIGHT_FLICKER_STOPS[index + 1];
-
-    if (elapsedMs <= endTime) {
-      const progress = clamp((elapsedMs - startTime) / Math.max(endTime - startTime, 1), 0, 1);
-      return toNumber(mix(startValue, endValue, easeOutCubic(progress)));
-    }
-  }
-
-  return 1;
-}
-
-function isStartupLightFlickerActive(elapsedMs) {
-  return Number.isFinite(elapsedMs) && elapsedMs >= 0 && elapsedMs < STARTUP_LIGHT_FLICKER_MS;
-}
-
-function buildSiteLight(startupElapsedMs = Number.POSITIVE_INFINITY) {
+function buildSiteLight() {
   if (typeof window === 'undefined') {
     return DEFAULT_SITE_LIGHT;
   }
@@ -464,24 +421,22 @@ function buildSiteLight(startupElapsedMs = Number.POSITIVE_INFINITY) {
   const introEase = easeOutCubic(introProgress);
   const pageEase = easeInOutSine(pageProgress);
   const expansion = toNumber(clamp((introEase * 0.8) + (pageEase * 0.12), 0, 1));
-  const startupMultiplier = getStartupLightMultiplier(startupElapsedMs);
-  const strength = toNumber(clamp(mix(1, 0.78, expansion) * startupMultiplier, 0.18, 1.18));
-  const spread = toNumber(clamp(mix(0.68, 1.7, expansion) * mix(0.92, 1.03, startupMultiplier), 0.64, 1.76));
+  const strength = toNumber(clamp(mix(1, 0.78, expansion), 0.18, 1.18));
+  const spread = toNumber(clamp(mix(0.68, 1.7, expansion), 0.64, 1.76));
   const surfaceReach = toNumber(mix(1, 1.54, expansion));
   const focusY = toNumber(mix(0, 12, expansion));
-  const coreOpacity = toNumber(clamp(mix(0.96, 0.42, expansion) * startupMultiplier, 0.14, 1.08));
-  const haloOpacity = toNumber(clamp(mix(0.84, 0.62, expansion) * mix(0.68, 1.08, startupMultiplier), 0.18, 0.94));
-  const beamOpacity = toNumber(clamp(mix(0.82, 0.26, expansion) * mix(0.62, 1.12, startupMultiplier), 0.12, 0.92));
-  const washOpacity = toNumber(clamp(mix(0.56, 0.42, expansion) * mix(0.74, 1.06, startupMultiplier), 0.18, 0.68));
-  const ambientOpacity = toNumber(clamp(mix(0.58, 0.38, expansion) * mix(0.78, 1.04, startupMultiplier), 0.2, 0.66));
-  const pageFillOpacity = toNumber(clamp(mix(0.01, 0.06, expansion) * mix(0.42, 1, startupMultiplier), 0.004, 0.07));
-  const shadowStrength = toNumber(clamp(mix(1.08, 1.18, expansion) * mix(0.82, 1.06, startupMultiplier), 0.72, 1.26));
-  const highlightStrength = toNumber(clamp(mix(1.14, 1, expansion) * mix(0.8, 1.08, startupMultiplier), 0.74, 1.24));
+  const coreOpacity = toNumber(clamp(mix(0.96, 0.42, expansion), 0.14, 1.08));
+  const haloOpacity = toNumber(clamp(mix(0.84, 0.62, expansion), 0.18, 0.94));
+  const beamOpacity = toNumber(clamp(mix(0.82, 0.26, expansion), 0.12, 0.92));
+  const washOpacity = toNumber(clamp(mix(0.56, 0.42, expansion), 0.18, 0.68));
+  const ambientOpacity = toNumber(clamp(mix(0.58, 0.38, expansion), 0.2, 0.66));
+  const pageFillOpacity = toNumber(clamp(mix(0.01, 0.06, expansion), 0.004, 0.07));
+  const shadowStrength = toNumber(clamp(mix(1.08, 1.18, expansion), 0.72, 1.26));
+  const highlightStrength = toNumber(clamp(mix(1.14, 1, expansion), 0.74, 1.24));
 
   return {
     signature: [
       expansion,
-      startupMultiplier,
       strength,
       spread,
       surfaceReach,
@@ -818,15 +773,12 @@ const LogoBackdrop = ({
   logoAnchorSelector = null,
   lightAnchorSelector = null,
   showLogo = true,
-  lightMode = 'reactive',
+  lightMode = 'fixed',
   fixedLightProfile = 'default',
-  startupFlicker = false,
-  startupFlickerDelayMs = 0,
 }) => {
   const isReactiveLight = lightMode === 'reactive';
   const fixedSiteLight = getFixedSiteLight(fixedLightProfile);
   const initialSiteLight = isReactiveLight ? DEFAULT_SITE_LIGHT : fixedSiteLight;
-  const startupFlickerEnabled = startupFlicker && isReactiveLight;
   const logoStageRef = useRef(null);
   const lightStageRef = useRef(null);
   const logoLightingFrameRef = useRef(null);
@@ -958,10 +910,7 @@ const LogoBackdrop = ({
     let surfaceObserver = null;
     let frameId = null;
     let refreshFrameId = null;
-    let startupFrameId = null;
     let surfaceElements = collectSurfaceLightElements();
-    const startupFlickerStart = window.performance.now() + startupFlickerDelayMs;
-    const startupFlickerEnd = startupFlickerStart + STARTUP_LIGHT_FLICKER_MS;
 
     const renderSiteLight = (nextSiteLight) => {
       siteLightCurrentRef.current = nextSiteLight;
@@ -1036,11 +985,8 @@ const LogoBackdrop = ({
 
     const syncSiteLight = () => {
       frameId = null;
-      const startupElapsedMs = startupFlickerEnabled
-        ? window.performance.now() - startupFlickerStart
-        : Number.POSITIVE_INFINITY;
       const nextSiteLight = isReactiveLight
-        ? buildSiteLight(startupElapsedMs)
+        ? buildSiteLight()
         : fixedSiteLight;
 
       if (getMotionStateDelta(siteLightTargetRef.current, nextSiteLight) < SITE_LIGHT_TARGET_EPSILON) {
@@ -1056,12 +1002,6 @@ const LogoBackdrop = ({
         return;
       }
 
-      if (startupFlickerEnabled && isStartupLightFlickerActive(startupElapsedMs)) {
-        stopSiteLightAnimation();
-        renderSiteLight(nextSiteLight);
-        return;
-      }
-
       ensureSiteLightAnimation();
     };
 
@@ -1070,22 +1010,7 @@ const LogoBackdrop = ({
       frameId = window.requestAnimationFrame(syncSiteLight);
     };
 
-    const runStartupFlicker = (timestamp) => {
-      requestSync();
-
-      if (timestamp < startupFlickerEnd) {
-        startupFrameId = window.requestAnimationFrame(runStartupFlicker);
-        return;
-      }
-
-      startupFrameId = null;
-      requestSync();
-    };
-
     requestSync();
-    if (startupFlickerEnabled) {
-      startupFrameId = window.requestAnimationFrame(runStartupFlicker);
-    }
 
     window.addEventListener('resize', requestSync, { passive: true });
     if (isReactiveLight) {
@@ -1106,10 +1031,6 @@ const LogoBackdrop = ({
         window.cancelAnimationFrame(refreshFrameId);
       }
 
-      if (startupFrameId !== null) {
-        window.cancelAnimationFrame(startupFrameId);
-      }
-
       stopSiteLightAnimation();
       window.removeEventListener('resize', requestSync);
       if (isReactiveLight) {
@@ -1123,7 +1044,7 @@ const LogoBackdrop = ({
         clearSurfaceLighting(element);
       });
     };
-  }, [fixedSiteLight, isReactiveLight, startupFlickerDelayMs, startupFlickerEnabled]);
+  }, [fixedSiteLight, isReactiveLight]);
 
   const baseFillId = `${idBase}-hero-logo-fill`;
   const specularId = `${idBase}-hero-logo-specular`;

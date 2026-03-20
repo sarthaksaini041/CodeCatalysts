@@ -867,9 +867,10 @@ const Team = () => {
           height: 24rem;
           transform: translateX(-50%);
           background:
-            radial-gradient(circle at 30% 40%, rgba(0, 243, 255, 0.12), transparent 34%),
-            radial-gradient(circle at 72% 58%, rgba(192, 132, 252, 0.08), transparent 32%);
-          filter: blur(26px);
+            radial-gradient(circle at 30% 40%, rgba(88, 166, 255, 0.08), transparent 34%),
+            radial-gradient(circle at 72% 58%, rgba(72, 112, 238, 0.06), transparent 32%);
+          filter: blur(34px);
+          opacity: 0.78;
           pointer-events: none;
         }
 
@@ -891,16 +892,11 @@ const Team = () => {
         .team-carousel-stage-wrap {
           position: relative;
           isolation: isolate;
-          border-radius: 34px;
-          padding: clamp(1.1rem, 2vw, 1.75rem);
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -28%), rgba(242, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.14))) 0%, rgba(110, 236, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.3))) 18%, transparent 58%),
-            linear-gradient(180deg, rgba(9, 13, 30, 0.86), rgba(5, 8, 18, 0.94)),
-            rgba(4, 6, 18, 0.92);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 26px) var(--surface-shadow-blur, 44px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.1)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.34)));
+          border-radius: 0;
+          padding: clamp(1rem, 1.8vw, 1.45rem) 0;
+          background: transparent;
+          border: 0;
+          box-shadow: none;
           overflow: hidden;
         }
 
@@ -908,9 +904,7 @@ const Team = () => {
           content: '';
           position: absolute;
           inset: 0;
-          background:
-            radial-gradient(circle at 16% 18%, rgba(0, 243, 255, 0.14), transparent 24%),
-            radial-gradient(circle at 84% 74%, rgba(192, 132, 252, 0.11), transparent 22%);
+          background: none;
           pointer-events: none;
         }
 
@@ -931,7 +925,7 @@ const Team = () => {
           background:
             linear-gradient(125deg, rgba(255, 255, 255, 0.08), transparent 28%, transparent 72%, rgba(255, 255, 255, 0.05)),
             radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.06), transparent 42%);
-          opacity: 0.6;
+          opacity: 0;
           pointer-events: none;
         }
 
@@ -1002,30 +996,25 @@ const Team = () => {
           border-radius: 999px;
           background: radial-gradient(circle, var(--accent-soft), transparent 72%);
           filter: blur(36px);
-          opacity: 0.85;
+          opacity: 0;
           pointer-events: none;
         }
 
         .team-carousel-card {
           position: relative;
           height: 100%;
-          border-radius: 28px;
+          border-radius: 10px;
           overflow: hidden;
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -26%), rgba(244, 254, 255, calc(0.05 + (var(--surface-light-strength, 0.34) * 0.16))) 0%, rgba(116, 236, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.34))) 18%, transparent 56%),
-            linear-gradient(180deg, rgba(12, 16, 34, 0.94), rgba(7, 10, 20, 0.98));
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 24px) var(--surface-shadow-blur, 38px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.12)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.03 + (var(--surface-edge-opacity, 0.08) * 0.46))),
-            0 0 0 1px var(--accent-soft);
+          background: linear-gradient(180deg, rgba(10, 18, 36, 0.62), rgba(8, 16, 34, 0.74));
+          border: 1px solid rgba(132, 166, 224, 0.2);
+          box-shadow: none;
         }
 
         .team-carousel-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%, transparent 70%, rgba(0, 0, 0, 0.3));
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 24%, transparent 70%, rgba(0, 0, 0, 0.22));
           pointer-events: none;
         }
 
@@ -1033,8 +1022,8 @@ const Team = () => {
           content: '';
           position: absolute;
           inset: 0;
-          border-top: 1px solid var(--accent-line);
-          border-radius: 28px;
+          border-top: 1px solid rgba(150, 182, 236, 0.24);
+          border-radius: 10px;
           pointer-events: none;
         }
 
@@ -1178,10 +1167,10 @@ const Team = () => {
           width: 46px;
           height: 46px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(132, 166, 224, 0.24);
           background:
             radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.03 + (var(--surface-light-strength, 0.34) * 0.1))) 0%, transparent 56%),
-            rgba(255, 255, 255, 0.04);
+            rgba(10, 18, 36, 0.58);
           color: rgba(255, 255, 255, 0.82);
           display: inline-flex;
           align-items: center;
@@ -1192,15 +1181,13 @@ const Team = () => {
             border-color 0.3s ease,
             background 0.3s ease,
             color 0.3s ease;
-          box-shadow:
-            var(--surface-shadow-x, 0px) calc(var(--surface-shadow-y, 18px) * 0.42) calc(var(--surface-shadow-blur, 30px) * 0.34) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) * 0.3)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.3)));
+          box-shadow: none;
         }
 
         .team-carousel-nav:hover:not(:disabled) {
           transform: translateY(-2px);
-          border-color: rgba(0, 243, 255, 0.3);
-          background: rgba(0, 243, 255, 0.08);
+          border-color: rgba(156, 190, 246, 0.36);
+          background: rgba(12, 22, 44, 0.72);
           color: #ffffff;
         }
 
@@ -1245,14 +1232,10 @@ const Team = () => {
           position: relative;
           max-width: 920px;
           width: 100%;
-          border-radius: 1.5rem;
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -28%), rgba(244, 254, 255, calc(0.04 + (var(--surface-light-strength, 0.34) * 0.12))) 0%, rgba(110, 236, 255, calc(0.02 + (var(--surface-glow-opacity, 0.12) * 0.26))) 18%, transparent 58%),
-            linear-gradient(160deg, rgba(8, 12, 28, 0.97), rgba(4, 6, 16, 0.98));
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 34px) calc(var(--surface-shadow-blur, 48px) + 20px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.24)),
-            0 0 60px rgba(0, 243, 255, 0.04);
+          border-radius: 12px;
+          background: linear-gradient(160deg, rgba(8, 16, 34, 0.88), rgba(6, 12, 28, 0.94));
+          border: 1px solid rgba(132, 166, 224, 0.2);
+          box-shadow: none;
           overflow: hidden;
           cursor: default;
         }
@@ -1315,7 +1298,7 @@ const Team = () => {
           }
 
           .team-carousel-stage-wrap {
-            border-radius: 28px;
+            border-radius: 0;
           }
         }
 
@@ -1410,7 +1393,7 @@ const Team = () => {
 
           .team-carousel-stage-wrap {
             padding: 1.12rem 1rem 1.16rem;
-            border-radius: 24px;
+            border-radius: 0;
           }
 
           .team-carousel-controls {

@@ -133,13 +133,13 @@ const Hero = () => {
         }
 
         .hero-code-accent {
-          background: linear-gradient(135deg, #8ff7ff 0%, #35d7ff 34%, #4ea9ff 68%, #7ca7ff 100%);
+          background: linear-gradient(135deg, #9be3ff 0%, #63c5ff 34%, #4f8dff 68%, #365cff 100%);
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;
           text-shadow: none;
           filter:
-            drop-shadow(0 0 18px rgba(58, 216, 255, 0.18))
+            drop-shadow(0 0 18px rgba(88, 172, 255, 0.24))
             drop-shadow(0 12px 28px rgba(0, 0, 0, 0.26));
         }
 
@@ -175,18 +175,10 @@ const Hero = () => {
           align-items: center;
           justify-content: center;
           gap: 1rem;
-          padding: 0.95rem 1.25rem;
+          padding: 0.96rem 1.28rem;
           border-radius: 999px;
-          background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -20%), rgba(236, 253, 255, calc(0.05 + (var(--surface-light-strength, 0.34) * 0.14))) 0%, rgba(120, 238, 255, calc(0.03 + (var(--surface-glow-opacity, 0.12) * 0.44))) 22%, transparent 58%),
-            rgba(6, 10, 20, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow:
-            var(--surface-shadow-x, 0px) var(--surface-shadow-y, 18px) var(--surface-shadow-blur, 32px) rgba(0, 0, 0, calc(var(--surface-shadow-opacity, 0.24) + 0.06)),
-            inset 0 1px 0 rgba(255, 255, 255, calc(0.02 + (var(--surface-edge-opacity, 0.08) * 0.42))),
-            inset 0 -12px 24px rgba(0, 0, 0, calc(var(--surface-occlusion-opacity, 0.14) * 0.72));
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
+          background: rgba(8, 12, 24, 0.82);
+          border: 1px solid rgba(255, 255, 255, 0.05);
           margin: 0 auto;
         }
 
@@ -199,25 +191,29 @@ const Hero = () => {
 
         .hero-metric-value {
           color: #ffffff;
-          font-size: 1.2rem;
+          font-size: 1.26rem;
           font-weight: 800;
           letter-spacing: -0.04em;
           line-height: 1;
+          text-shadow: none;
+          filter: none;
         }
 
         .hero-metric-label {
-          color: rgba(192, 204, 226, 0.66);
+          color: rgba(192, 204, 226, 0.72);
           font-size: 0.68rem;
           font-weight: 700;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.16em;
           line-height: 1;
           text-transform: uppercase;
+          text-shadow: none;
+          filter: none;
         }
 
         .hero-metric-divider {
           width: 1px;
           height: 2rem;
-          background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+          background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.18), transparent);
         }
 
         @media (max-width: 768px) {
