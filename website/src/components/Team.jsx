@@ -169,7 +169,7 @@ const TeamCarousel = memo(({
                     '--accent': color,
                     '--accent-soft': withAlpha(color, '22'),
                     '--accent-line': withAlpha(color, '70'),
-                    opacity: isVisible ? 1 - absoluteOffset * 0.18 : 0,
+                    opacity: isVisible ? 1 - absoluteOffset * 0.03 : 0,
                     zIndex: members.length - absoluteOffset,
                     pointerEvents: isVisible ? 'auto' : 'none',
                   }}
@@ -223,8 +223,8 @@ const TeamCarousel = memo(({
           <div className="team-carousel-controls">
             <div className="team-carousel-counter">
               <span>Team</span>
-              <strong>{String(activeIndex + 1).padStart(2, '0')}</strong>
-              <span>/ {String(members.length).padStart(2, '0')}</span>
+              <strong>{activeIndex + 1}</strong>
+              <span>/ {members.length}</span>
             </div>
 
             <div className="team-carousel-button-row">
@@ -898,6 +898,8 @@ const Team = () => {
           border: 0;
           box-shadow: none;
           overflow: hidden;
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
         }
 
         .team-carousel-stage-wrap::before {
@@ -964,8 +966,8 @@ const Team = () => {
             rotateZ(calc(var(--offset) * 8deg))
             scale(calc(1 - var(--abs) * 0.1));
           filter:
-            saturate(calc(1 - var(--abs) * 0.12))
-            brightness(calc(1 - var(--abs) * 0.06));
+            saturate(calc(1 - var(--abs) * 0.08))
+            brightness(calc(1 - var(--abs) * 0.04));
           transition:
             transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1),
             opacity 0.45s ease,
@@ -1139,39 +1141,54 @@ const Team = () => {
           justify-content: space-between;
           gap: 1rem;
           margin-top: 1.25rem;
+          padding: 0 clamp(1.5rem, 6vw, 5.5rem);
         }
 
         .team-carousel-counter {
           display: inline-flex;
           align-items: baseline;
           gap: 0.45rem;
-          color: rgba(215, 224, 241, 0.72);
+          color: rgba(232, 240, 255, 0.92);
           font-size: 0.85rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.48);
+          padding: 0.4rem 0.75rem;
+          border-radius: 999px;
+          background: rgba(2, 8, 18, 0.58);
+          border: 1px solid rgba(164, 196, 246, 0.32);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
         }
 
         .team-carousel-counter strong {
           color: #ffffff;
           font-size: 1.35rem;
           letter-spacing: -0.04em;
+          text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
         }
 
         .team-carousel-button-row {
           display: inline-flex;
           align-items: center;
           gap: 0.75rem;
+          padding: 0.3rem;
+          border-radius: 999px;
+          background: rgba(2, 8, 18, 0.5);
+          border: 1px solid rgba(164, 196, 246, 0.3);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
         }
 
         .team-carousel-nav {
           width: 46px;
           height: 46px;
           border-radius: 999px;
-          border: 1px solid rgba(132, 166, 224, 0.24);
+          border: 1px solid rgba(168, 198, 246, 0.48);
           background:
-            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.03 + (var(--surface-light-strength, 0.34) * 0.1))) 0%, transparent 56%),
-            rgba(10, 18, 36, 0.58);
-          color: rgba(255, 255, 255, 0.82);
+            radial-gradient(circle at var(--surface-light-x, 50%) var(--surface-light-y, -18%), rgba(255, 255, 255, calc(0.06 + (var(--surface-light-strength, 0.34) * 0.12))) 0%, transparent 56%),
+            rgba(10, 18, 36, 0.84);
+          color: rgba(255, 255, 255, 0.98);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1181,18 +1198,18 @@ const Team = () => {
             border-color 0.3s ease,
             background 0.3s ease,
             color 0.3s ease;
-          box-shadow: none;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
         }
 
         .team-carousel-nav:hover:not(:disabled) {
           transform: translateY(-2px);
-          border-color: rgba(156, 190, 246, 0.36);
-          background: rgba(12, 22, 44, 0.72);
+          border-color: rgba(186, 212, 255, 0.64);
+          background: rgba(14, 26, 52, 0.94);
           color: #ffffff;
         }
 
         .team-carousel-nav:disabled {
-          opacity: 0.4;
+          opacity: 0.55;
           cursor: not-allowed;
         }
 

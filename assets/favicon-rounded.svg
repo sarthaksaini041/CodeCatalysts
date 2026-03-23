@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Code Catalysts Favicon">
+  <defs>
+    <clipPath id="rounded-corners">
+      <rect x="0" y="0" width="512" height="512" rx="168" ry="168" />
+    </clipPath>
+  </defs>
+  <image href="/logo.png" x="0" y="0" width="512" height="512" clip-path="url(#rounded-corners)" preserveAspectRatio="xMidYMid slice" />
+</svg>

@@ -3,11 +3,23 @@ import { ArrowUpRight, Save } from 'lucide-react';
 import AdminField from '../../components/admin/AdminField';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
-import { siteSettings as fallbackSettings } from '../../data';
 import { siteSettingsAdminService } from '../../services/adminContentService';
 import { normalizeOptionalEmail, normalizeOptionalUrl, validateOptionalUrl } from '../../utils/content';
 
-function getInitialForm(settings = fallbackSettings) {
+const DEFAULT_SITE_SETTINGS = {
+  heroTitle: 'Code Catalysts',
+  heroSubtitle: 'Not experts yet - just people who love learning and creating.',
+  contactEmail: 'team@codecatalysts.dev',
+  githubUrl: '',
+  linkedinUrl: 'https://www.linkedin.com/company/code-catalysts000/',
+  instagramUrl: 'https://www.instagram.com/codecatalysts',
+  twitterUrl: '',
+  footerText: 'Copyright {year} Code Catalysts. Built by the team.',
+  ctaButtonText: 'Join the Build Squad',
+  brandLinks: [],
+};
+
+function getInitialForm(settings = DEFAULT_SITE_SETTINGS) {
   return {
     hero_title: settings.heroTitle || '',
     hero_subtitle: settings.heroSubtitle || '',
@@ -94,15 +106,15 @@ export default function AdminSettingsPage() {
         }
 
         setForm(getInitialForm({
-          heroTitle: settings?.hero_title || fallbackSettings.heroTitle,
-          heroSubtitle: settings?.hero_subtitle || fallbackSettings.heroSubtitle,
-          contactEmail: settings?.contact_email || fallbackSettings.contactEmail,
-          githubUrl: settings?.github_url || fallbackSettings.githubUrl,
-          linkedinUrl: settings?.linkedin_url || fallbackSettings.linkedinUrl,
-          instagramUrl: settings?.instagram_url || fallbackSettings.instagramUrl,
-          twitterUrl: settings?.twitter_url || fallbackSettings.twitterUrl,
-          footerText: settings?.footer_text || fallbackSettings.footerText,
-          ctaButtonText: settings?.cta_button_text || fallbackSettings.ctaButtonText,
+          heroTitle: settings?.hero_title || DEFAULT_SITE_SETTINGS.heroTitle,
+          heroSubtitle: settings?.hero_subtitle || DEFAULT_SITE_SETTINGS.heroSubtitle,
+          contactEmail: settings?.contact_email || DEFAULT_SITE_SETTINGS.contactEmail,
+          githubUrl: settings?.github_url || DEFAULT_SITE_SETTINGS.githubUrl,
+          linkedinUrl: settings?.linkedin_url || DEFAULT_SITE_SETTINGS.linkedinUrl,
+          instagramUrl: settings?.instagram_url || DEFAULT_SITE_SETTINGS.instagramUrl,
+          twitterUrl: settings?.twitter_url || DEFAULT_SITE_SETTINGS.twitterUrl,
+          footerText: settings?.footer_text || DEFAULT_SITE_SETTINGS.footerText,
+          ctaButtonText: settings?.cta_button_text || DEFAULT_SITE_SETTINGS.ctaButtonText,
           brandLinks: [
             {
               label: settings?.brand_primary_label || '',
@@ -165,8 +177,8 @@ export default function AdminSettingsPage() {
         linkedin_url: normalizeOptionalUrl(form.linkedin_url),
         instagram_url: normalizeOptionalUrl(form.instagram_url),
         twitter_url: normalizeOptionalUrl(form.twitter_url),
-        footer_text: form.footer_text.trim() || fallbackSettings.footerText,
-        cta_button_text: form.cta_button_text.trim() || fallbackSettings.ctaButtonText,
+        footer_text: form.footer_text.trim() || DEFAULT_SITE_SETTINGS.footerText,
+        cta_button_text: form.cta_button_text.trim() || DEFAULT_SITE_SETTINGS.ctaButtonText,
         brand_primary_label: form.brand_primary_label.trim() || null,
         brand_primary_url: normalizeOptionalUrl(form.brand_primary_url),
         brand_secondary_label: form.brand_secondary_label.trim() || null,
@@ -365,7 +377,7 @@ export default function AdminSettingsPage() {
 
                 <div className="admin-form-actions">
                   <div className="admin-field-copy">
-                    Live preview: {footerPreview} | CTA: {form.cta_button_text || fallbackSettings.ctaButtonText}
+                    Live preview: {footerPreview} | CTA: {form.cta_button_text || DEFAULT_SITE_SETTINGS.ctaButtonText}
                   </div>
                   <button type="submit" className="admin-button admin-button-primary" disabled={saving}>
                     <Save size={16} />

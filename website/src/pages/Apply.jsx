@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasSupabaseBrowserConfig, requireSupabaseBrowserClient } from '../lib/supabase';
+import LogoBackdrop from '../components/LogoBackdrop';
 
 /* ── Configuration ── */
 const STEPS = [
@@ -701,6 +702,25 @@ const ApplyPage = () => {
       position: 'relative', overflow: 'hidden',
       background: '#020212',
     }}>
+      <LogoBackdrop
+        showLogo={false}
+        lightMode="fixed"
+        fixedLightProfile="apply"
+        startupFlicker={false}
+      />
+
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          background:
+            'linear-gradient(180deg, rgba(1, 4, 10, 0.34) 0%, rgba(1, 4, 10, 0.22) 22%, rgba(1, 4, 10, 0.48) 100%), radial-gradient(circle at 50% 18%, rgba(3, 10, 20, 0.1) 0%, rgba(3, 10, 20, 0.36) 58%, rgba(2, 6, 14, 0.72) 100%)',
+        }}
+      />
+
       <div className="apply-page-content" style={{
         maxWidth: '780px', margin: '0 auto', padding: '2.25rem 1.5rem 4rem',
         position: 'relative', zIndex: 1,

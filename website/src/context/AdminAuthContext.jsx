@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -45,6 +46,7 @@ const AdminAuthContext = createContext({
 });
 
 export function AdminAuthProvider({ children }) {
+  const hasHydratedSessionRef = useRef(false);
   const [state, setState] = useState({
     session: null,
     user: null,
@@ -53,8 +55,9 @@ export function AdminAuthProvider({ children }) {
     error: hasSupabaseBrowserConfig ? null : missingConfigMessage,
   });
 
-  const refreshSession = useCallback(async () => {
+  const refreshSession = useCallback(async ({ showLoading = false } = {}) => {
     if (!hasSupabaseBrowserConfig) {
+      hasHydratedSessionRef.current = true;
       setState({
         session: null,
         user: null,
@@ -65,11 +68,22 @@ export function AdminAuthProvider({ children }) {
       return;
     }
 
-    setState((current) => ({
-      ...current,
-      isLoading: true,
-      error: null,
-    }));
+    if (showLoading) {
+      setState((current) => ({
+        ...current,
+        isLoading: true,
+        error: null,
+      }));
+    } else {
+      setState((current) => (
+        current.error
+          ? {
+            ...current,
+            error: null,
+          }
+          : current
+      ));
+    }
 
     try {
       const adminState = await getCurrentAdminState();
@@ -78,6 +92,7 @@ export function AdminAuthProvider({ children }) {
         await signOutAdmin();
       }
 
+      hasHydratedSessionRef.current = true;
       startTransition(() => {
         setState({
           session: adminState.isAdmin ? adminState.session : null,
@@ -88,30 +103,48 @@ export function AdminAuthProvider({ children }) {
         });
       });
     } catch (error) {
+      const normalizedError = getNormalizedAdminAuthErrorMessage(error);
+      hasHydratedSessionRef.current = true;
+
       startTransition(() => {
-        setState({
-          session: null,
-          user: null,
-          isAdmin: false,
-          isLoading: false,
-          error: getNormalizedAdminAuthErrorMessage(error),
+        setState((current) => {
+          if (!showLoading && current.isAdmin) {
+            return {
+              ...current,
+              isLoading: false,
+              error: normalizedError,
+            };
+          }
+
+          return {
+            session: null,
+            user: null,
+            isAdmin: false,
+            isLoading: false,
+            error: normalizedError,
+          };
         });
       });
     }
   }, []);
 
   useEffect(() => {
-    refreshSession();
+    const initialRefreshId = window.setTimeout(() => {
+      refreshSession({ showLoading: true });
+    }, 0);
 
     if (!supabase) {
-      return undefined;
+      return () => {
+        window.clearTimeout(initialRefreshId);
+      };
     }
 
     const { data } = supabase.auth.onAuthStateChange(() => {
-      refreshSession();
+      refreshSession({ showLoading: false });
     });
 
     return () => {
+      window.clearTimeout(initialRefreshId);
       data.subscription.unsubscribe();
     };
   }, [refreshSession]);

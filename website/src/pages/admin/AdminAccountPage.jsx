@@ -181,7 +181,7 @@ export default function AdminAccountPage() {
                   <div>
                     <div className="admin-record-title">{getAdminDisplayName(user)}</div>
                     <p className="admin-record-subtitle">@{getAdminUsername(user)}</p>
-                    <p className="admin-record-copy" style={{ marginTop: '0.45rem' }}>
+                    <p className="admin-record-copy admin-record-copy-offset">
                       {user?.email || 'Authenticated admin'}
                     </p>
                   </div>
@@ -203,7 +203,7 @@ export default function AdminAccountPage() {
               </div>
             </div>
 
-            <div className="admin-card-header" style={{ marginTop: '1rem' }}>
+            <div className="admin-card-header admin-section-gap-top">
               <div>
                 <h2>All admin users</h2>
                 <p>Everyone listed here can access and manage the admin portal.</p>
@@ -211,7 +211,7 @@ export default function AdminAccountPage() {
             </div>
 
             {loadingAdminUsers ? (
-              <div className="admin-loading" style={{ minHeight: '120px' }}>
+              <div className="admin-loading admin-loading-compact">
                 <div>
                   <div className="admin-loading-spinner" />
                   <p>Loading admin users...</p>
@@ -222,7 +222,7 @@ export default function AdminAccountPage() {
             ) : adminUsers.length === 0 ? (
               <AdminNotice tone="empty">No admin users found.</AdminNotice>
             ) : (
-              <div className="admin-record-list" style={{ marginTop: '0.75rem' }}>
+              <div className="admin-record-list admin-list-gap-top">
                 {adminUsers.map((adminEntry) => {
                   const isCurrentUser = currentUserId && adminEntry.user_id === currentUserId;
 
@@ -234,7 +234,7 @@ export default function AdminAccountPage() {
                             {adminEntry.email || 'Email not set'}
                           </div>
                           <p className="admin-record-subtitle">User ID: {adminEntry.user_id}</p>
-                          <p className="admin-record-copy" style={{ marginTop: '0.4rem' }}>
+                          <p className="admin-record-copy admin-record-copy-offset">
                             Added {new Date(adminEntry.created_at).toLocaleString()}
                           </p>
                         </div>
@@ -300,7 +300,7 @@ export default function AdminAccountPage() {
               </div>
             </form>
 
-            <div className="admin-card-header" style={{ marginTop: '1.15rem' }}>
+            <div className="admin-card-header admin-section-gap-top-lg">
               <div>
                 <h2>Security</h2>
                 <p>Change your password and manage the current session.</p>

@@ -13,9 +13,10 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
-import { faqItems } from '../../data';
+import { useAdminEditorAutoReveal } from '../../hooks/useAdminEditorAutoReveal';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
 import { showAdminToast } from '../../lib/adminToast';
+import { getDefaultFaqSection } from '../../services/faqContentService';
 import { siteSectionsAdminService } from '../../services/adminContentService';
 import { moveItem, normalizeNullableString, slugify, toDisplayOrder } from '../../utils/content';
 
@@ -133,14 +134,7 @@ function getEmptySectionForm(faqOnly = false) {
 }
 
 function getDefaultFaqSectionItems() {
-  return faqItems.map((item, index) => ({
-    id: `faq-default-${index + 1}`,
-    title: item.question,
-    subtitle: '',
-    description: item.answer,
-    displayOrder: index,
-    isVisible: true,
-  }));
+  return normalizeSectionItems(getDefaultFaqSection().items);
 }
 
 function validateSection(form) {
@@ -210,6 +204,10 @@ export default function AdminSectionsPage({ faqOnly = false }) {
     reorderItems,
   } = useAdminCollection(siteSectionsAdminService);
   const sectionsUnavailable = Boolean(error);
+  const sectionsReadOnly = useMemo(
+    () => sections.some((section) => Boolean(section.__fallback)),
+    [sections],
+  );
   const [selectedSectionId, setSelectedSectionId] = useState(null);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
   const [isSectionEditorOpen, setIsSectionEditorOpen] = useState(false);
@@ -227,6 +225,8 @@ export default function AdminSectionsPage({ faqOnly = false }) {
   const [statusTone, setStatusTone] = useState('info');
   const [pendingDeleteSection, setPendingDeleteSection] = useState(null);
   const [pendingDeleteItem, setPendingDeleteItem] = useState(null);
+  const sectionEditorRef = useAdminEditorAutoReveal(isSectionEditorOpen);
+  const itemEditorRef = useAdminEditorAutoReveal(isItemEditorOpen);
   const primaryFaqSection = useMemo(() => {
     if (!faqOnly) {
       return null;
@@ -305,6 +305,12 @@ export default function AdminSectionsPage({ faqOnly = false }) {
   }, [editingItemId, sectionItems]);
 
   const editSection = (section) => {
+    if (sectionsReadOnly) {
+      setStatusTone('error');
+      setStatusMessage('Sections are in fallback read-only mode. Apply "supabase/migrations/20260319_site_sections.sql" to enable editing.');
+      return;
+    }
+
     setIsCreatingSection(false);
     setSelectedSectionId(section.id);
     setSectionForm(mapSectionToForm(section));
@@ -320,6 +326,12 @@ export default function AdminSectionsPage({ faqOnly = false }) {
   };
 
   const startNewSection = () => {
+    if (sectionsReadOnly) {
+      setStatusTone('error');
+      setStatusMessage('Sections are in fallback read-only mode. Apply "supabase/migrations/20260319_site_sections.sql" to enable editing.');
+      return;
+    }
+
     setIsCreatingSection(true);
     setSelectedSectionId(null);
     setIsSectionEditorOpen(true);
@@ -493,6 +505,12 @@ export default function AdminSectionsPage({ faqOnly = false }) {
   };
 
   const startNewItem = () => {
+    if (sectionsReadOnly) {
+      setStatusTone('error');
+      setStatusMessage('Sections are in fallback read-only mode. Apply "supabase/migrations/20260319_site_sections.sql" to enable editing.');
+      return;
+    }
+
     setEditingItemId(null);
     setIsItemEditorOpen(true);
     setItemForm(EMPTY_ITEM_FORM);
@@ -509,6 +527,12 @@ export default function AdminSectionsPage({ faqOnly = false }) {
   };
 
   const editItem = (item) => {
+    if (sectionsReadOnly) {
+      setStatusTone('error');
+      setStatusMessage('Sections are in fallback read-only mode. Apply "supabase/migrations/20260319_site_sections.sql" to enable editing.');
+      return;
+    }
+
     setEditingItemId(item.id);
     setIsItemEditorOpen(true);
     setItemForm(mapItemToForm(item));
@@ -659,7 +683,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
             type="button"
             className="admin-button admin-button-primary admin-button-icon"
             onClick={startNewSection}
-            disabled={sectionsUnavailable}
+            disabled={sectionsUnavailable || sectionsReadOnly}
             aria-label={faqOnly ? 'Create FAQ section' : 'Create section'}
             title={faqOnly ? 'Create FAQ section' : 'Create section'}
           >
@@ -669,7 +693,11 @@ export default function AdminSectionsPage({ faqOnly = false }) {
       />
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
-      {error ? <AdminNotice tone="error">{error}</AdminNotice> : null}
+      {sectionsReadOnly ? (
+        <AdminNotice tone="info">
+          Sections are loaded in fallback read-only mode. Apply "supabase/migrations/20260319_site_sections.sql" to enable create, edit, and delete actions.
+        </AdminNotice>
+      ) : null}
 
       <section className={`admin-grid${isSectionEditorOpen ? '' : ' admin-grid-single'}`}>
         <div className="admin-card">
@@ -713,7 +741,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                           <p className="admin-record-subtitle">
                             {section.layout_type === 'faq' ? 'FAQ layout' : 'Cards grid layout'} - #{section.anchor_id}
                           </p>
-                          <p className="admin-record-copy" style={{ marginTop: '0.45rem' }}>
+                          <p className="admin-record-copy admin-record-copy-offset">
                             {section.title}
                           </p>
                         </div>
@@ -729,7 +757,13 @@ export default function AdminSectionsPage({ faqOnly = false }) {
 
                       <ToggleSwitch
                         checked={Boolean(section.is_visible)}
-                        onChange={(nextValue) => handleSectionVisibility(section, nextValue)}
+                        onChange={(nextValue) => {
+                          if (sectionsReadOnly) {
+                            return;
+                          }
+
+                          handleSectionVisibility(section, nextValue);
+                        }}
                         label={section.is_visible ? 'Visible on the website' : 'Hidden from the website'}
                         hint="Hide the section without removing its content."
                       />
@@ -740,7 +774,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                             type="button"
                             className="admin-button admin-button-icon admin-button-move-up"
                             onClick={() => handleSectionMove(index, 'up')}
-                            disabled={index === 0}
+                            disabled={sectionsReadOnly || index === 0}
                             aria-label={`Move ${section.label} up`}
                             title={`Move ${section.label} up`}
                           >
@@ -752,7 +786,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                             type="button"
                             className="admin-button admin-button-icon admin-button-move-down"
                             onClick={() => handleSectionMove(index, 'down')}
-                            disabled={index === visibleSections.length - 1}
+                            disabled={sectionsReadOnly || index === visibleSections.length - 1}
                             aria-label={`Move ${section.label} down`}
                             title={`Move ${section.label} down`}
                           >
@@ -763,6 +797,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                           type="button"
                           className="admin-button admin-button-icon admin-button-edit"
                           onClick={() => editSection(section)}
+                          disabled={sectionsReadOnly}
                           aria-label={faqOnly ? 'Edit FAQ section' : `Edit ${section.label}`}
                           title={faqOnly ? 'Edit FAQ section' : `Edit ${section.label}`}
                         >
@@ -773,6 +808,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                             type="button"
                             className="admin-button admin-button-danger admin-button-icon"
                             onClick={() => setPendingDeleteSection(section)}
+                            disabled={sectionsReadOnly}
                             aria-label={`Delete ${section.label}`}
                             title={`Delete ${section.label}`}
                           >
@@ -789,7 +825,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
         </div>
 
         {isSectionEditorOpen ? (
-        <div className="admin-card">
+        <div ref={sectionEditorRef} className="admin-card admin-editor-card">
           <div className="admin-card-body">
             <div className="admin-card-header">
               <div>
@@ -951,6 +987,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                   type="button"
                   className="admin-button admin-button-primary admin-button-icon"
                   onClick={startNewItem}
+                  disabled={sectionsReadOnly}
                   aria-label={faqOnly ? 'Create question' : 'Create item'}
                   title={faqOnly ? 'Create question' : 'Create item'}
                 >
@@ -979,7 +1016,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                       <div>
                         <div className="admin-record-title">{item.title}</div>
                         {item.subtitle ? <p className="admin-record-subtitle">{item.subtitle}</p> : null}
-                        <p className="admin-record-copy" style={{ marginTop: '0.45rem' }}>
+                        <p className="admin-record-copy admin-record-copy-offset">
                           {item.description}
                         </p>
                       </div>
@@ -992,7 +1029,13 @@ export default function AdminSectionsPage({ faqOnly = false }) {
 
                     <ToggleSwitch
                       checked={item.isVisible}
-                      onChange={(nextValue) => handleItemVisibility(item, nextValue)}
+                      onChange={(nextValue) => {
+                        if (sectionsReadOnly) {
+                          return;
+                        }
+
+                        handleItemVisibility(item, nextValue);
+                      }}
                       label={item.isVisible ? 'Visible on the website' : 'Hidden from the website'}
                       hint="You can hide an individual item without removing it."
                     />
@@ -1002,7 +1045,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                         type="button"
                         className="admin-button admin-button-icon admin-button-move-up"
                         onClick={() => handleItemMove(index, 'up')}
-                        disabled={index === 0}
+                        disabled={sectionsReadOnly || index === 0}
                         aria-label={`Move ${item.title} up`}
                         title={`Move ${item.title} up`}
                       >
@@ -1012,7 +1055,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                         type="button"
                         className="admin-button admin-button-icon admin-button-move-down"
                         onClick={() => handleItemMove(index, 'down')}
-                        disabled={index === sectionItems.length - 1}
+                        disabled={sectionsReadOnly || index === sectionItems.length - 1}
                         aria-label={`Move ${item.title} down`}
                         title={`Move ${item.title} down`}
                       >
@@ -1022,6 +1065,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                         type="button"
                         className="admin-button admin-button-icon admin-button-edit"
                         onClick={() => editItem(item)}
+                        disabled={sectionsReadOnly}
                         aria-label={`Edit ${item.title}`}
                         title={`Edit ${item.title}`}
                       >
@@ -1031,6 +1075,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
                         type="button"
                         className="admin-button admin-button-danger admin-button-icon"
                         onClick={() => setPendingDeleteItem(item)}
+                        disabled={sectionsReadOnly}
                         aria-label={`Delete ${item.title}`}
                         title={`Delete ${item.title}`}
                       >
@@ -1045,7 +1090,7 @@ export default function AdminSectionsPage({ faqOnly = false }) {
         </div>
 
         {isItemEditorOpen ? (
-        <div className="admin-card">
+        <div ref={itemEditorRef} className="admin-card admin-editor-card">
           <div className="admin-card-body">
             <div className="admin-card-header">
               <div>

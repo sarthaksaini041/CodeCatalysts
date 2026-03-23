@@ -1,8 +1,13 @@
-export default function AdminPageHeader({ title, description, actions }) {
+export default function AdminPageHeader({
+  title,
+  description,
+  actions,
+  eyebrow = 'Admin',
+}) {
   return (
     <header className="admin-page-header">
       <div className="admin-page-header-copy">
-        <span className="admin-page-kicker">Control center</span>
+        <span className="admin-page-kicker">{eyebrow}</span>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
       </div>

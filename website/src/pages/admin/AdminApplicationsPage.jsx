@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, Mail, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import {
+  ArrowUpRight,
+  Mail,
+  MailOpen,
+  RefreshCw,
+  Save,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import AdminField from '../../components/admin/AdminField';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
+import AdminStatCard from '../../components/admin/AdminStatCard';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
@@ -24,6 +33,12 @@ const DEFAULT_APPLICATION_FORM_SETTINGS = {
   ],
   application_form_success_redirect_seconds: 10,
 };
+
+const APPLICATION_FILTERS = [
+  { value: 'all', label: 'All applications' },
+  { value: 'unread', label: 'Unread' },
+  { value: 'read', label: 'Read' },
+];
 
 function toLines(value = []) {
   return (Array.isArray(value) ? value : []).join('\n');
@@ -86,6 +101,9 @@ export default function AdminApplicationsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState('info');
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [formSettings, setFormSettings] = useState(() => {
     const normalized = normalizeApplicationFormSettings();
     return {
@@ -102,6 +120,11 @@ export default function AdminApplicationsPage() {
 
   const unreadCount = useMemo(
     () => applications.filter((item) => !item.is_read).length,
+    [applications],
+  );
+
+  const withEmailCount = useMemo(
+    () => applications.filter((item) => item.email).length,
     [applications],
   );
 
@@ -152,6 +175,40 @@ export default function AdminApplicationsPage() {
       isActive = false;
     };
   }, []);
+
+  const filteredApplications = useMemo(() => {
+    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
+
+    return applications.filter((application) => {
+      if (filter === 'unread' && application.is_read) {
+        return false;
+      }
+
+      if (filter === 'read' && !application.is_read) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const haystack = [
+        application.name,
+        application.email,
+        application.domain,
+        application.college,
+        application.branch,
+        application.tech_stack,
+        application.project,
+        application.why_join,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
+    });
+  }, [applications, deferredSearchQuery, filter]);
 
   const setFormSetting = (key, value) => {
     setFormSettings((current) => ({ ...current, [key]: value }));
@@ -244,7 +301,7 @@ export default function AdminApplicationsPage() {
     <div className="admin-page">
       <AdminPageHeader
         title="Applications"
-        description="View and manage submissions from the public apply form."
+        description="Review incoming submissions and manage the public application form settings."
         actions={(
           <>
             <a
@@ -271,12 +328,60 @@ export default function AdminApplicationsPage() {
 
       {statusMessage ? <AdminNotice tone={statusTone}>{statusMessage}</AdminNotice> : null}
 
+      <section className="admin-stats">
+        <AdminStatCard
+          icon={Mail}
+          label="Total submissions"
+          value={applications.length}
+          description="All applications collected so far"
+          featured
+        />
+        <AdminStatCard
+          icon={MailOpen}
+          label="Unread"
+          value={unreadCount}
+          description="Submissions still waiting for review"
+        />
+        <AdminStatCard
+          icon={Mail}
+          label="With email"
+          value={withEmailCount}
+          description="Applicants you can reply to directly"
+        />
+      </section>
+
       <section className="admin-card">
         <div className="admin-card-body">
           <div className="admin-card-header">
             <div>
               <h2>Incoming applications</h2>
-              <p>{applications.length} total • {unreadCount} unread</p>
+              <p>
+                {filteredApplications.length} shown from {applications.length} total submissions.
+              </p>
+            </div>
+            <div className="admin-toolbar-stack">
+              <label className="admin-inline-search" htmlFor="application-search">
+                <Search size={16} aria-hidden="true" />
+                <input
+                  id="application-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search applicants"
+                />
+              </label>
+              <div className="admin-page-toolbar">
+                {APPLICATION_FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={`admin-filter-chip${filter === item.value ? ' is-active' : ''}`}
+                    onClick={() => setFilter(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -289,17 +394,17 @@ export default function AdminApplicationsPage() {
             </div>
           ) : error ? (
             <AdminNotice tone="error">{error}</AdminNotice>
-          ) : applications.length === 0 ? (
-            <AdminNotice tone="empty">No applications yet.</AdminNotice>
+          ) : filteredApplications.length === 0 ? (
+            <AdminNotice tone="empty">No applications match this view.</AdminNotice>
           ) : (
             <div className="admin-record-list">
-              {applications.map((application) => (
+              {filteredApplications.map((application) => (
                 <article key={application.id} className="admin-record-card">
                   <div className="admin-record-top">
                     <div>
                       <div className="admin-record-title">{application.name || 'Unnamed applicant'}</div>
                       <p className="admin-record-subtitle">{application.email || 'No email provided'}</p>
-                      <p className="admin-record-copy" style={{ marginTop: '0.4rem' }}>
+                      <p className="admin-record-copy admin-record-copy-offset">
                         Domain: {application.domain || 'Not specified'}
                       </p>
                     </div>
@@ -313,7 +418,7 @@ export default function AdminApplicationsPage() {
                     </div>
                   </div>
 
-                  <div className="admin-detail-grid" style={{ marginBottom: '0.85rem' }}>
+                  <div className="admin-detail-grid">
                     <div className="admin-detail-item">
                       <span>Year</span>
                       <strong>{application.year || '-'}</strong>
@@ -333,18 +438,18 @@ export default function AdminApplicationsPage() {
                   </div>
 
                   {application.why_join ? (
-                    <p className="admin-record-copy" style={{ marginBottom: '0.5rem' }}>
+                    <p className="admin-record-copy">
                       <strong>Why join:</strong> {application.why_join}
                     </p>
                   ) : null}
 
                   {application.project ? (
-                    <p className="admin-record-copy" style={{ marginBottom: '0.5rem' }}>
+                    <p className="admin-record-copy">
                       <strong>Project:</strong> {application.project}
                     </p>
                   ) : null}
 
-                  <div className="admin-actions">
+                  <div className="admin-actions admin-actions-wide">
                     {application.email ? (
                       <a
                         href={`mailto:${application.email}`}
@@ -384,7 +489,7 @@ export default function AdminApplicationsPage() {
           <div className="admin-card-header">
             <div>
               <h2>Application form settings</h2>
-              <p>Edit public apply-form labels and dropdown options.</p>
+              <p>Update the public apply form labels and dropdown options.</p>
             </div>
           </div>
 
@@ -458,7 +563,7 @@ export default function AdminApplicationsPage() {
               <AdminField
                 label="Success redirect (seconds)"
                 htmlFor="application_form_success_redirect_seconds"
-                description="How long success modal stays before redirecting home."
+                description="How long the success state stays visible before redirecting home."
                 error={settingsErrors.application_form_success_redirect_seconds}
               >
                 <input

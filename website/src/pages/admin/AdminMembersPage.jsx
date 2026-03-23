@@ -17,6 +17,7 @@ import ImageUploadField from '../../components/admin/ImageUploadField';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { useAdminEditorAutoReveal } from '../../hooks/useAdminEditorAutoReveal';
 import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { membersAdminService } from '../../services/adminContentService';
 import { showAdminToast } from '../../lib/adminToast';
@@ -132,6 +133,7 @@ export default function AdminMembersPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState('info');
   const [pendingDelete, setPendingDelete] = useState(null);
+  const editorRef = useAdminEditorAutoReveal(isEditorOpen);
 
   const editingMember = useMemo(
     () => members.find((member) => member.id === editingMemberId) || null,
@@ -376,9 +378,14 @@ export default function AdminMembersPage() {
                       <div className="admin-record-meta">
                         <div className="admin-record-thumb">
                           {member.image_url ? (
-                            <img src={member.image_url} alt={member.name} />
+                            <img
+                              src={member.image_url}
+                              alt={member.name}
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
-                            <div className="admin-upload-placeholder" style={{ minHeight: '100%', padding: '0.6rem' }}>
+                            <div className="admin-upload-placeholder admin-upload-placeholder-fill">
                               <Users size={18} />
                             </div>
                           )}
@@ -390,7 +397,7 @@ export default function AdminMembersPage() {
                             {member.role} {member.department ? `- ${member.department}` : ''}
                           </p>
                           {member.short_bio ? (
-                            <p className="admin-record-copy" style={{ marginTop: '0.5rem' }}>
+                            <p className="admin-record-copy admin-record-copy-offset-lg">
                               {member.short_bio}
                             </p>
                           ) : null}
@@ -466,7 +473,7 @@ export default function AdminMembersPage() {
         </div>
 
         {isEditorOpen ? (
-        <div className="admin-card">
+        <div ref={editorRef} className="admin-card admin-editor-card">
             <div className="admin-card-body">
               <div className="admin-card-header">
                 <div>

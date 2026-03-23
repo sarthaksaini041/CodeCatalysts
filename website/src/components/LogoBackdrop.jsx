@@ -775,6 +775,7 @@ const LogoBackdrop = ({
   showLogo = true,
   lightMode = 'fixed',
   fixedLightProfile = 'default',
+  onReady,
 }) => {
   const isReactiveLight = lightMode === 'reactive';
   const fixedSiteLight = getFixedSiteLight(fixedLightProfile);
@@ -792,9 +793,39 @@ const LogoBackdrop = ({
   const [logoLighting, setLogoLighting] = useState(DEFAULT_LOGO_LIGHTING);
   const [siteLight, setSiteLight] = useState(initialSiteLight);
   const idBase = useId().replace(/:/g, '');
+  const hasReportedReadyRef = useRef(false);
 
   useStageAnchor(logoStageRef, logoAnchorSelector, 'center', '50%', { immediateOnScroll: true });
   useStageAnchor(lightStageRef, lightAnchorSelector, 'top', '0px');
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof onReady !== 'function' || hasReportedReadyRef.current) {
+      return undefined;
+    }
+
+    let rafIdOne = null;
+    let rafIdTwo = null;
+
+    rafIdOne = window.requestAnimationFrame(() => {
+      rafIdTwo = window.requestAnimationFrame(() => {
+        if (hasReportedReadyRef.current) {
+          return;
+        }
+
+        hasReportedReadyRef.current = true;
+        onReady();
+      });
+    });
+
+    return () => {
+      if (rafIdOne !== null) {
+        window.cancelAnimationFrame(rafIdOne);
+      }
+      if (rafIdTwo !== null) {
+        window.cancelAnimationFrame(rafIdTwo);
+      }
+    };
+  }, [onReady]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !showLogo) {
@@ -806,6 +837,8 @@ const LogoBackdrop = ({
     if (!logoStage || !lightStage) {
       return undefined;
     }
+
+    const shouldTrackScroll = Boolean(logoAnchorSelector || lightAnchorSelector);
 
     let frameId = null;
     let styleObserver = null;
@@ -881,7 +914,9 @@ const LogoBackdrop = ({
     requestLightingSync();
 
     window.addEventListener('resize', requestLightingSync, { passive: true });
-    window.addEventListener('scroll', requestLightingSync, { passive: true });
+    if (shouldTrackScroll) {
+      window.addEventListener('scroll', requestLightingSync, { passive: true });
+    }
 
     if (typeof MutationObserver === 'function') {
       styleObserver = new MutationObserver(requestLightingSync);
@@ -896,7 +931,9 @@ const LogoBackdrop = ({
 
       stopLogoLightingAnimation();
       window.removeEventListener('resize', requestLightingSync);
-      window.removeEventListener('scroll', requestLightingSync);
+      if (shouldTrackScroll) {
+        window.removeEventListener('scroll', requestLightingSync);
+      }
       styleObserver?.disconnect();
     };
   }, [lightAnchorSelector, logoAnchorSelector, showLogo]);
@@ -1157,7 +1194,7 @@ const LogoBackdrop = ({
               left: '50%',
               width: 'min(1420px, 102vw)',
               aspectRatio: '1.72 / 1',
-              transform: 'translate3d(-50%, -50%, 0)',
+              transform: 'translate3d(-50%, -53.5%, 0)', /* Adjusted vertical center for visual perfection */
               willChange: 'left, top',
             }}
           >

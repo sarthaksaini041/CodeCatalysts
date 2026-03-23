@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { useAdminEditorAutoReveal } from '../../hooks/useAdminEditorAutoReveal';
 import { showAdminToast } from '../../lib/adminToast';
 import { journeyAdminService } from '../../services/adminContentService';
 import { normalizeNullableString } from '../../utils/content';
@@ -75,6 +76,7 @@ export default function AdminJourneyPage() {
   const [statusTone, setStatusTone] = useState('info');
   const [saving, setSaving] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const editorRef = useAdminEditorAutoReveal(isEditorOpen);
 
   const editingItem = useMemo(
     () => items.find((entry) => entry.id === editingId) || null,
@@ -257,7 +259,7 @@ export default function AdminJourneyPage() {
                     <div className="admin-record-top">
                       <div className="admin-record-meta">
                         <div className="admin-record-thumb">
-                          <div className="admin-upload-placeholder" style={{ minHeight: '100%', padding: '0.6rem' }}>
+                          <div className="admin-upload-placeholder admin-upload-placeholder-fill">
                             <Milestone size={18} />
                           </div>
                         </div>
@@ -265,7 +267,7 @@ export default function AdminJourneyPage() {
                         <div>
                           <div className="admin-record-title">{item.title}</div>
                           <p className="admin-record-subtitle">{item.date_label}</p>
-                          <p className="admin-record-copy" style={{ marginTop: '0.5rem' }}>
+                          <p className="admin-record-copy admin-record-copy-offset-lg">
                             {item.description}
                           </p>
                         </div>
@@ -332,7 +334,7 @@ export default function AdminJourneyPage() {
         </div>
 
         {isEditorOpen ? (
-        <div className="admin-card">
+        <div ref={editorRef} className="admin-card admin-editor-card">
             <div className="admin-card-body">
               <div className="admin-card-header">
                 <div>

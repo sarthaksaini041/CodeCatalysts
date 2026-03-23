@@ -1,5 +1,13 @@
-import { useMemo, useState } from 'react';
-import { ArrowUpRight, Eye, HardDrive, Image, RefreshCw, Trash2 } from 'lucide-react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import {
+  ArrowUpRight,
+  Eye,
+  HardDrive,
+  Image,
+  RefreshCw,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
 import AdminStatCard from '../../components/admin/AdminStatCard';
@@ -23,21 +31,32 @@ export default function AdminMediaPage() {
     removeMedia,
   } = useAdminMediaLibrary();
   const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState('info');
   const [pendingDelete, setPendingDelete] = useState(null);
 
   const filteredItems = useMemo(() => {
-    if (filter === 'used') {
-      return items.filter((item) => item.isUsed);
-    }
+    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
 
-    if (filter === 'unused') {
-      return items.filter((item) => !item.isUsed);
-    }
+    return items.filter((item) => {
+      if (filter === 'used' && !item.isUsed) {
+        return false;
+      }
 
-    return items;
-  }, [filter, items]);
+      if (filter === 'unused' && item.isUsed) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const haystack = `${item.name} ${item.path} ${item.collection || ''}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [deferredSearchQuery, filter, items]);
 
   const totalSize = items.reduce((sum, item) => sum + (item.size || 0), 0);
   const usedCount = items.filter((item) => item.isUsed).length;
@@ -80,7 +99,7 @@ export default function AdminMediaPage() {
     <div className="admin-page">
       <AdminPageHeader
         title="Media"
-        description="Review website media stored in Supabase, reuse existing files, and remove unused assets."
+        description="Review stored assets, reuse existing files, and remove unused media without touching backend behavior."
         actions={(
           <>
             <a
@@ -106,45 +125,65 @@ export default function AdminMediaPage() {
       <section className="admin-stats">
         <AdminStatCard
           icon={Image}
-          label="Total Media"
+          label="Total media"
           value={items.length}
+          description="Images available in shared storage"
           featured
         />
         <AdminStatCard
           icon={Eye}
-          label="Used Media"
+          label="Used media"
           value={usedCount}
+          description="Currently referenced by site content"
         />
         <AdminStatCard
           icon={Trash2}
-          label="Unused Media"
+          label="Unused media"
           value={unusedCount}
+          description="Candidates for cleanup"
         />
         <AdminStatCard
           icon={HardDrive}
-          label="Total Storage"
+          label="Storage used"
           value={formatBytes(totalSize)}
+          description="Approximate image footprint"
         />
       </section>
 
       <section className="admin-card">
         <div className="admin-card-body">
-            <div className="admin-card-header">
-              <div>
-                <h2>Uploaded images</h2>
-                <p>Includes admin uploads and synced website assets stored in Supabase.</p>
+          <div className="admin-card-header">
+            <div>
+              <h2>Uploaded images</h2>
+              <p>
+                {filteredItems.length} shown from {items.length} total assets in storage.
+              </p>
+            </div>
+
+            <div className="admin-toolbar-stack">
+              <label className="admin-inline-search" htmlFor="media-search">
+                <Search size={16} aria-hidden="true" />
+                <input
+                  id="media-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search media files"
+                />
+              </label>
+
+              <div className="admin-page-toolbar">
+                {FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={`admin-filter-chip${filter === item.value ? ' is-active' : ''}`}
+                    onClick={() => setFilter(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
-            <div className="admin-page-toolbar">
-              {FILTERS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  className={`admin-filter-chip${filter === item.value ? ' is-active' : ''}`}
-                  onClick={() => setFilter(item.value)}
-                >
-                  {item.label}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -156,13 +195,18 @@ export default function AdminMediaPage() {
               </div>
             </div>
           ) : filteredItems.length === 0 ? (
-            <AdminNotice tone="empty">No images match this filter yet.</AdminNotice>
+            <AdminNotice tone="empty">No images match this view.</AdminNotice>
           ) : (
             <div className="admin-media-grid">
               {filteredItems.map((item) => (
                 <article key={item.path} className="admin-media-card">
                   <div className="admin-media-preview">
-                    <img src={item.publicUrl} alt={item.name} />
+                    <img
+                      src={item.publicUrl}
+                      alt={item.name}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
 
                   <div className="admin-media-meta">

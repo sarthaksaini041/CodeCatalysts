@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ImagePlus, Library, Trash2, Upload } from 'lucide-react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { ImagePlus, Library, Search, Trash2, Upload } from 'lucide-react';
 
 export default function ImageUploadField({
   label,
@@ -15,6 +15,8 @@ export default function ImageUploadField({
   onSelectExisting,
 }) {
   const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryQuery, setLibraryQuery] = useState('');
+  const deferredLibraryQuery = useDeferredValue(libraryQuery);
   const inputId = useMemo(
     () => `${String(label || 'image').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-upload`,
     [label],
@@ -28,6 +30,19 @@ export default function ImageUploadField({
     }
   }, [previewUrl]);
 
+  const filteredMedia = useMemo(() => {
+    const normalizedQuery = deferredLibraryQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return existingMedia;
+    }
+
+    return existingMedia.filter((item) => {
+      const haystack = `${item.name} ${item.path} ${item.collection || ''}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [deferredLibraryQuery, existingMedia]);
+
   return (
     <div className="admin-upload">
       <div className="admin-upload-header">
@@ -37,11 +52,16 @@ export default function ImageUploadField({
 
       <div className={`admin-upload-preview${resolvedPreviewUrl ? ' is-filled' : ''}`}>
         {resolvedPreviewUrl ? (
-          <img src={resolvedPreviewUrl} alt={`${label} preview`} />
+          <img
+            src={resolvedPreviewUrl}
+            alt={`${label} preview`}
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div className="admin-upload-placeholder">
             <div>
-              <ImagePlus size={26} style={{ marginBottom: '0.7rem' }} />
+              <ImagePlus size={26} className="admin-upload-icon" />
               <p>Upload a JPG, PNG, WEBP, or GIF up to 5 MB.</p>
             </div>
           </div>
@@ -57,7 +77,7 @@ export default function ImageUploadField({
           id={inputId}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
-          style={{ display: 'none' }}
+          className="admin-hidden-input"
           onChange={(event) => onFileChange(event.target.files?.[0] || null)}
         />
 
@@ -72,7 +92,12 @@ export default function ImageUploadField({
           <button
             type="button"
             className="admin-button admin-button-ghost"
-            onClick={() => setShowLibrary((current) => !current)}
+            onClick={() => {
+              if (showLibrary) {
+                setLibraryQuery('');
+              }
+              setShowLibrary((current) => !current);
+            }}
           >
             <Library size={16} />
             <span>{showLibrary ? 'Hide media library' : 'Reuse existing'}</span>
@@ -82,33 +107,55 @@ export default function ImageUploadField({
 
       {showLibrary ? (
         <div className="admin-upload-library">
+          <div className="admin-upload-toolbar">
+            <label className="admin-inline-search admin-inline-search-compact" htmlFor={`${inputId}-search`}>
+              <Search size={16} aria-hidden="true" />
+              <input
+                id={`${inputId}-search`}
+                type="search"
+                value={libraryQuery}
+                onChange={(event) => setLibraryQuery(event.target.value)}
+                placeholder="Search existing media"
+              />
+            </label>
+            <span className="admin-upload-meta">
+              {filteredMedia.length} of {existingMedia.length} assets
+            </span>
+          </div>
+
           {loadingMedia ? (
-            <div className="admin-upload-placeholder" style={{ minHeight: '140px' }}>
+            <div className="admin-upload-placeholder admin-upload-placeholder-library">
               <div>
                 <p>Loading images...</p>
               </div>
             </div>
           ) : mediaError ? (
             <div className="admin-field-error">{mediaError}</div>
-          ) : existingMedia.length === 0 ? (
-            <div className="admin-upload-placeholder" style={{ minHeight: '140px' }}>
+          ) : filteredMedia.length === 0 ? (
+            <div className="admin-upload-placeholder admin-upload-placeholder-library">
               <div>
-                <p>No images available yet.</p>
+                <p>No images match this search yet.</p>
               </div>
             </div>
           ) : (
             <div className="admin-media-picker-grid">
-              {existingMedia.map((item) => (
+              {filteredMedia.map((item) => (
                 <button
                   key={item.path}
                   type="button"
                   className="admin-media-picker-card"
                   onClick={() => {
                     onSelectExisting(item);
+                    setLibraryQuery('');
                     setShowLibrary(false);
                   }}
                 >
-                  <img src={item.publicUrl} alt={item.name} />
+                  <img
+                    src={item.publicUrl}
+                    alt={item.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <span className="admin-media-picker-label">{item.name}</span>
                 </button>
               ))}

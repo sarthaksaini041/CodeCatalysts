@@ -14,6 +14,7 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
+import { useAdminEditorAutoReveal } from '../../hooks/useAdminEditorAutoReveal';
 import {
   getDefaultFaqSection,
   loadManagedFaqSection,
@@ -103,6 +104,8 @@ export default function AdminFaqPage() {
   const [itemSaving, setItemSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusTone, setStatusTone] = useState('info');
+  const sectionEditorRef = useAdminEditorAutoReveal(isSectionEditorOpen);
+  const questionEditorRef = useAdminEditorAutoReveal(isQuestionEditorOpen);
 
   const questionItems = useMemo(
     () => normalizeQuestionItems(faqSection.items),
@@ -218,7 +221,6 @@ export default function AdminFaqPage() {
           kicker: sectionForm.kicker.trim() || 'FAQ',
           title: sectionForm.title.trim(),
           description: sectionForm.description.trim(),
-          isVisible: true,
           items: questionItems,
         },
         'FAQ section updated successfully.',
@@ -404,7 +406,7 @@ export default function AdminFaqPage() {
                       <div className="admin-record-title">{faqSection.title}</div>
                       <p className="admin-record-subtitle">#{faqSection.anchorId}</p>
                       {faqSection.description ? (
-                        <p className="admin-record-copy" style={{ marginTop: '0.45rem' }}>
+                        <p className="admin-record-copy admin-record-copy-offset">
                           {faqSection.description}
                         </p>
                       ) : null}
@@ -431,7 +433,7 @@ export default function AdminFaqPage() {
             </div>
 
             {isSectionEditorOpen ? (
-              <div className="admin-card">
+              <div ref={sectionEditorRef} className="admin-card admin-editor-card">
                 <div className="admin-card-body">
                   <div className="admin-card-header">
                     <div>
@@ -520,7 +522,7 @@ export default function AdminFaqPage() {
                         <div className="admin-record-top">
                           <div>
                             <div className="admin-record-title">{item.title}</div>
-                            <p className="admin-record-copy" style={{ marginTop: '0.45rem' }}>
+                            <p className="admin-record-copy admin-record-copy-offset">
                               {item.description}
                             </p>
                           </div>
@@ -586,7 +588,7 @@ export default function AdminFaqPage() {
             </div>
 
             {isQuestionEditorOpen ? (
-              <div className="admin-card">
+              <div ref={questionEditorRef} className="admin-card admin-editor-card">
                 <div className="admin-card-body">
                   <div className="admin-card-header">
                     <div>

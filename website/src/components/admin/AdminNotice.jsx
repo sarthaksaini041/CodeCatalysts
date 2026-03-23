@@ -4,9 +4,10 @@ export default function AdminNotice({ tone = 'info', children }) {
     : tone === 'empty'
       ? 'admin-inline-empty'
       : 'admin-inline-info';
+  const role = tone === 'error' ? 'alert' : 'status';
 
   return (
-    <div className={className}>
+    <div className={className} role={role}>
       <span className="admin-notice-dot" aria-hidden="true" />
       <span>{children}</span>
     </div>

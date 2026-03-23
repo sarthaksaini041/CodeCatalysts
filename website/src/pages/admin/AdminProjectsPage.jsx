@@ -17,6 +17,7 @@ import ImageUploadField from '../../components/admin/ImageUploadField';
 import StatusBadge from '../../components/admin/StatusBadge';
 import ToggleSwitch from '../../components/admin/ToggleSwitch';
 import { useAdminCollection } from '../../hooks/useAdminCollection';
+import { useAdminEditorAutoReveal } from '../../hooks/useAdminEditorAutoReveal';
 import { useAdminMediaLibrary } from '../../hooks/useAdminMediaLibrary';
 import { projectsAdminService } from '../../services/adminContentService';
 import { showAdminToast } from '../../lib/adminToast';
@@ -125,6 +126,7 @@ export default function AdminProjectsPage() {
   const [saving, setSaving] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [slugTouched, setSlugTouched] = useState(false);
+  const editorRef = useAdminEditorAutoReveal(isEditorOpen);
 
   const editingProject = useMemo(
     () => projects.find((project) => project.id === editingProjectId) || null,
@@ -388,9 +390,14 @@ export default function AdminProjectsPage() {
                       <div className="admin-record-meta">
                         <div className="admin-record-thumb">
                           {project.image_url ? (
-                            <img src={project.image_url} alt={project.title} />
+                            <img
+                              src={project.image_url}
+                              alt={project.title}
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
-                            <div className="admin-upload-placeholder" style={{ minHeight: '100%', padding: '0.6rem' }}>
+                            <div className="admin-upload-placeholder admin-upload-placeholder-fill">
                               <SquareKanban size={18} />
                             </div>
                           )}
@@ -403,7 +410,7 @@ export default function AdminProjectsPage() {
                             {project.category ? ` - ${project.category}` : ''}
                             {project.status ? ` - ${project.status}` : ''}
                           </p>
-                          <p className="admin-record-copy" style={{ marginTop: '0.5rem' }}>
+                          <p className="admin-record-copy admin-record-copy-offset-lg">
                             {project.short_description}
                           </p>
                         </div>
@@ -479,7 +486,7 @@ export default function AdminProjectsPage() {
         </div>
 
         {isEditorOpen ? (
-        <div className="admin-card">
+        <div ref={editorRef} className="admin-card admin-editor-card">
             <div className="admin-card-body">
               <div className="admin-card-header">
                 <div>

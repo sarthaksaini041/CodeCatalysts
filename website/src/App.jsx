@@ -18,6 +18,7 @@ import {
 
 import { motion } from 'framer-motion';
 
+import LogoBackdrop from './components/LogoBackdrop';
 const Team = lazy(() => import('./components/Team'));
 const Projects = lazy(() => import('./components/Projects'));
 const Journey = lazy(() => import('./components/Journey'));
@@ -68,6 +69,16 @@ const fadeUp = {
     opacity: 1,
     y: 0,
     transition: { duration: 0.8, ease: [0.25, 0.4, 0.25, 1] },
+  },
+};
+
+/* ── Scale-fade (for background) ── */
+const scaleFade = {
+  hidden: { opacity: 0, scale: 1.05 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.2, ease: [0.25, 0.4, 0.25, 1] },
   },
 };
 
@@ -170,7 +181,24 @@ function HomePage() {
         initial="hidden"
         animate="visible"
       >
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Background scales in first */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={scaleFade}
+        >
+          <LogoBackdrop
+            lightMode="fixed"
+            fixedLightProfile="default"
+          />
+        </motion.div>
+
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           {/* Navbar slides down */}
           <motion.div variants={slideDown}>
             <Navbar />

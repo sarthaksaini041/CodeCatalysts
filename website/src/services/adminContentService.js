@@ -1,4 +1,5 @@
 import { requireSupabaseBrowserClient } from '../lib/supabase';
+import { faqItems, howWeBuild } from '../data';
 
 const TABLE_MIGRATION_HINTS = {
   admin_users: 'supabase/migrations/20260319_admin_portal.sql',
@@ -67,8 +68,85 @@ function normalizeTableError(table, error) {
   );
 
   normalizedError.code = error?.code;
+  normalizedError.table = table;
+  normalizedError.isMissingTable = true;
   normalizedError.cause = error;
   return normalizedError;
+}
+
+function isSiteSectionsMissingTableError(error) {
+  if (!error) {
+    return false;
+  }
+
+  if (error.isMissingTable && error.table === 'site_sections') {
+    return true;
+  }
+
+  if (isMissingTableError(error, 'site_sections')) {
+    return true;
+  }
+
+  if (isMissingTableError(error.cause, 'site_sections')) {
+    return true;
+  }
+
+  return String(error.message || '').includes('The Supabase table "site_sections" is not available');
+}
+
+function createFallbackSiteSections() {
+  const aboutItems = howWeBuild.map((item, index) => ({
+    id: `fallback-about-item-${index + 1}`,
+    title: item.title,
+    subtitle: item.tag,
+    description: item.description,
+    display_order: index,
+    is_visible: true,
+  }));
+
+  const fallbackFaqItems = faqItems.map((item, index) => ({
+    id: `fallback-faq-item-${index + 1}`,
+    title: item.question,
+    subtitle: '',
+    description: item.answer,
+    display_order: index,
+    is_visible: true,
+  }));
+
+  return [
+    {
+      id: 'fallback-about-section',
+      label: 'How We Build',
+      section_key: 'how-we-build',
+      anchor_id: 'about',
+      layout_type: 'card_grid',
+      kicker: 'About',
+      title: 'How We Build',
+      description: 'Fallback content loaded from local data while site_sections is unavailable.',
+      display_order: 0,
+      is_visible: true,
+      items: aboutItems,
+      __fallback: true,
+    },
+    {
+      id: 'fallback-faq-section',
+      label: 'FAQ',
+      section_key: 'faq',
+      anchor_id: 'faq',
+      layout_type: 'faq',
+      kicker: 'FAQ',
+      title: 'Questions Before You Apply',
+      description: 'Fallback FAQ loaded from local data while site_sections is unavailable.',
+      display_order: 1,
+      is_visible: true,
+      items: fallbackFaqItems,
+      __fallback: true,
+    },
+  ];
+}
+
+function throwSiteSectionsReadOnlyError() {
+  throw new Error('Sections are running in fallback read-only mode because "site_sections" is unavailable. Apply "supabase/migrations/20260319_site_sections.sql" to enable editing.');
 }
 
 function normalizeAdminUserMutationError(error) {
@@ -254,26 +332,76 @@ export const siteSettingsAdminService = {
   },
   async update(payload) {
     const client = getClient();
-    const { data, error } = await client
-      .from('site_settings')
-      .upsert([{ id: 1, ...payload }], { onConflict: 'id' })
-      .select()
-      .single();
+    let nextPayload = { id: 1, ...payload };
+    let missingColumns = 0;
 
-    if (error) {
-      throw normalizeTableError('site_settings', error);
+    while (true) {
+      const { data, error } = await client
+        .from('site_settings')
+        .upsert([nextPayload], { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error) {
+        return data;
+      }
+
+      const missingColumn = extractMissingColumnError(error);
+      const canRetryWithoutColumn =
+        missingColumn
+        && missingColumn.table === 'site_settings'
+        && Object.prototype.hasOwnProperty.call(nextPayload, missingColumn.column)
+        && missingColumn.column !== 'id';
+
+      if (!canRetryWithoutColumn) {
+        throw normalizeTableError('site_settings', error);
+      }
+
+      const { [missingColumn.column]: _ignoredColumn, ...fallbackPayload } = nextPayload;
+      nextPayload = fallbackPayload;
+      missingColumns += 1;
+
+      if (missingColumns > 12) {
+        throw normalizeTableError('site_settings', error);
+      }
     }
-
-    return data;
   },
 };
 
 export const siteSectionsAdminService = {
-  list: () => listOrdered('site_sections'),
+  async list() {
+    try {
+      return await listOrdered('site_sections');
+    } catch (error) {
+      if (isSiteSectionsMissingTableError(error)) {
+        return createFallbackSiteSections();
+      }
+
+      throw error;
+    }
+  },
   create: (payload) => createRecord('site_sections', payload),
-  update: (id, payload) => updateRecord('site_sections', id, payload),
-  remove: (id) => removeRecord('site_sections', id),
-  reorder: (orderedItems) => persistDisplayOrder('site_sections', orderedItems),
+  async update(id, payload) {
+    if (String(id).startsWith('fallback-')) {
+      throwSiteSectionsReadOnlyError();
+    }
+
+    return updateRecord('site_sections', id, payload);
+  },
+  async remove(id) {
+    if (String(id).startsWith('fallback-')) {
+      throwSiteSectionsReadOnlyError();
+    }
+
+    return removeRecord('site_sections', id);
+  },
+  async reorder(orderedItems) {
+    if (orderedItems.some((item) => String(item?.id || '').startsWith('fallback-'))) {
+      throwSiteSectionsReadOnlyError();
+    }
+
+    return persistDisplayOrder('site_sections', orderedItems);
+  },
 };
 
 export const adminUsersAdminService = {

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
 import { scrollToAnchor } from '../lib/smoothScroll';
 import { SITE_LOGO_ALT, SITE_LOGO_SRC } from '../lib/brandAssets';
 
@@ -13,6 +15,7 @@ const navLinks = [
 const Navbar = () => {
   const [activeHash, setActiveHash] = useState(() => window.location.hash || '#about');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navOffset = useMemo(() => (isScrolled ? '0rem' : '0rem'), [isScrolled]);
 
@@ -84,28 +87,50 @@ const Navbar = () => {
           })}
         </ul>
 
-        <a href="#join" className="nav-cta" onClick={handleNavClick('#join')}>
-          Join
-        </a>
+        <div className="nav-actions">
+          <a href="#join" className="nav-cta" onClick={(e) => { handleNavClick('#join')(e); setIsMenuOpen(false); }}>
+            Join
+          </a>
+          <button
+            type="button"
+            className="mobile-menu-btn"
+            aria-label="Toggle menu"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
-      <ul className="nav-links-mobile" role="list">
-        {navLinks.map((link) => {
-          const isActive = activeHash === link.href;
-          return (
-            <li key={link.name}>
-              <a
-                href={link.href}
-                className="nav-link-mobile"
-                data-active={isActive || undefined}
-                onClick={handleNavClick(link.href)}
-              >
-                {link.name}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="mobile-menu-overlay"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <ul className="nav-links-mobile-vertical" role="list">
+              {navLinks.map((link) => {
+                const isActive = activeHash === link.href;
+                return (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="nav-link-mobile"
+                      data-active={isActive || undefined}
+                      onClick={(e) => { handleNavClick(link.href)(e); setIsMenuOpen(false); }}
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         .site-nav-min {
@@ -132,7 +157,7 @@ const Navbar = () => {
         }
 
         .nav-shell,
-        .nav-links-mobile {
+        .mobile-menu-overlay {
           width: 100%;
           margin: 0;
           pointer-events: auto;
@@ -251,25 +276,60 @@ const Navbar = () => {
           background: rgba(112, 204, 255, 0.16);
         }
 
-        .nav-links-mobile {
-          display: none;
+        .nav-actions {
+          display: inline-flex;
           align-items: center;
-          justify-content: flex-start;
-          gap: 0.35rem;
-          padding: 0.36rem clamp(0.7rem, 2.2vw, 1.4rem);
-          border-radius: 0;
-          border: 0;
-          border-bottom: 1px solid rgba(130, 178, 236, 0.08);
-          background: rgba(8, 16, 34, 0.2);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          overflow-x: auto;
-          list-style: none;
+          gap: 0.8rem;
+          flex: 0 0 auto;
         }
 
-        .nav-links-mobile::-webkit-scrollbar {
+        .mobile-menu-btn {
           display: none;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: none;
+          color: #eef5ff;
+          cursor: pointer;
+          padding: 0.2rem;
+          transition: color 0.2s ease;
         }
+
+        .mobile-menu-btn:hover {
+          color: #7db8ff;
+        }
+
+        .mobile-menu-overlay {
+          background: rgba(8, 16, 34, 0.95);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(138, 186, 250, 0.16);
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .nav-links-mobile-vertical {
+          display: flex;
+          flex-direction: column;
+          padding: 1.25rem clamp(0.8rem, 2.2vw, 1.6rem) 1.5rem;
+          list-style: none;
+          margin: 0;
+          gap: 0.75rem;
+        }
+
+        .nav-links-mobile-vertical .nav-link-mobile {
+          justify-content: flex-start;
+          font-size: 1.1rem;
+          padding: 0.6rem 1rem;
+        }
+
+        .nav-links-mobile-vertical .nav-link-mobile[data-active]::after {
+          left: 1rem;
+          right: auto;
+          width: 40px;
+        }
+
+        /* Mobile nav row is completely replaced by dropdown */
 
         @media (max-width: 920px) {
           .nav-shell {
@@ -281,7 +341,7 @@ const Navbar = () => {
             display: none;
           }
 
-          .nav-links-mobile {
+          .mobile-menu-btn {
             display: inline-flex;
           }
         }
@@ -292,7 +352,7 @@ const Navbar = () => {
           }
 
           .nav-shell,
-          .nav-links-mobile {
+          .mobile-menu-overlay {
             width: 100%;
           }
 
@@ -301,9 +361,7 @@ const Navbar = () => {
             border-radius: 0;
           }
 
-          .nav-links-mobile {
-            border-radius: 0;
-          }
+          /* Removed nav-links-mobile border radius */
 
           .nav-cta {
             min-height: 34px;

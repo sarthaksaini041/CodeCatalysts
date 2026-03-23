@@ -8,6 +8,7 @@ import {
   SquareKanban,
   Users,
 } from 'lucide-react';
+import AdminActivityRow from '../../components/admin/AdminActivityRow';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminPageHeader from '../../components/admin/AdminPageHeader';
 import AdminStatCard from '../../components/admin/AdminStatCard';
@@ -32,10 +33,26 @@ import {
 } from '../../lib/adminPortalRoutes';
 
 const QUICK_ACTIONS = [
-  { to: ADMIN_MEMBERS_PATH, label: 'Add Member' },
-  { to: ADMIN_PROJECTS_PATH, label: 'Add Project' },
-  { to: ADMIN_JOURNEY_PATH, label: 'Add Journey Card' },
-  { to: ADMIN_SETTINGS_PATH, label: 'Edit Site Settings' },
+  {
+    to: ADMIN_MEMBERS_PATH,
+    label: 'Add member',
+    description: 'Update the public team lineup and profile details.',
+  },
+  {
+    to: ADMIN_PROJECTS_PATH,
+    label: 'Add project',
+    description: 'Publish a new project card with links and visibility controls.',
+  },
+  {
+    to: ADMIN_JOURNEY_PATH,
+    label: 'Add journey entry',
+    description: 'Capture a new milestone in the public timeline.',
+  },
+  {
+    to: ADMIN_SETTINGS_PATH,
+    label: 'Edit site settings',
+    description: 'Adjust hero copy, CTA text, and footer brand links.',
+  },
 ];
 
 export default function AdminDashboardPage() {
@@ -64,16 +81,14 @@ export default function AdminDashboardPage() {
           siteSettingsAdminService.get(),
         ]);
 
-        if (!isActive) {
-          return;
+        if (isActive) {
+          setSummary({
+            members,
+            projects,
+            journey,
+            settings,
+          });
         }
-
-        setSummary({
-          members,
-          projects,
-          journey,
-          settings,
-        });
       } catch (loadError) {
         if (isActive) {
           setError(loadError.message || 'Unable to load dashboard data.');
@@ -108,32 +123,36 @@ export default function AdminDashboardPage() {
     };
   }, [summary.journey, summary.members, summary.projects]);
 
-  const allActivity = useMemo(() => {
-    return createAdminActivityEntries({
+  const allActivity = useMemo(
+    () => createAdminActivityEntries({
       members: summary.members,
       projects: summary.projects,
       journey: summary.journey,
       settings: summary.settings,
-    });
-  }, [summary.journey, summary.members, summary.projects, summary.settings]);
+    }),
+    [summary.journey, summary.members, summary.projects, summary.settings],
+  );
 
-  const recentUpdateCount = useMemo(() => {
-    return getRecentAdminActivityCount(allActivity);
-  }, [allActivity]);
+  const recentUpdateCount = useMemo(
+    () => getRecentAdminActivityCount(allActivity),
+    [allActivity],
+  );
+
+  const recentActivity = useMemo(
+    () => allActivity.slice(0, 5),
+    [allActivity],
+  );
 
   return (
     <div className="admin-page">
       <AdminPageHeader
         title={`Hello, ${adminName}`}
-        description="A clear view of your content, visibility, recent edits, and the fastest ways to make changes."
+        description="Monitor content health, visibility, and recent publishing activity from one responsive dashboard."
         actions={(
-          <a
-            href={ADMIN_ACTIVITY_PATH}
-            className="admin-button admin-button-secondary"
-          >
+          <Link to={ADMIN_ACTIVITY_PATH} className="admin-button admin-button-secondary">
             <ArrowUpRight size={16} />
-            <span>Open activity</span>
-          </a>
+            <span>Open activity log</span>
+          </Link>
         )}
       />
 
@@ -148,62 +167,99 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <>
-          <section className="admin-card">
+          <section className="admin-card admin-dashboard-hero">
             <div className="admin-card-body">
-              <div className="admin-card-header">
-                <div>
-                  <h2>Dashboard snapshot</h2>
-                  <p>Quick overview of members, projects, visibility, and recent updates.</p>
-                </div>
+              <div className="admin-dashboard-hero-copy">
+                <span className="admin-page-kicker">Portal overview</span>
+                <h2>Everything important is visible at a glance.</h2>
+                <p>
+                  Track publishing volume, content visibility, and the latest changes
+                  without hopping between screens.
+                </p>
               </div>
 
               <div className="admin-stats">
                 <AdminStatCard
                   icon={Users}
-                  label="Total Members"
+                  label="Total members"
                   value={summary.members.length}
+                  description="Profiles in the team directory"
                   featured
                 />
                 <AdminStatCard
                   icon={SquareKanban}
-                  label="Total Projects"
+                  label="Total projects"
                   value={summary.projects.length}
+                  description="Public-facing project cards"
                 />
                 <AdminStatCard
                   icon={Milestone}
-                  label="Journey Entries"
+                  label="Journey entries"
                   value={summary.journey.length}
+                  description="Timeline milestones on the site"
                 />
                 <AdminStatCard
                   icon={Eye}
-                  label="Visible vs Hidden"
+                  label="Visible content"
                   value={`${visibilitySummary.visible}/${visibilitySummary.total || 0}`}
+                  description={`${visibilitySummary.hidden} hidden item${visibilitySummary.hidden === 1 ? '' : 's'} kept in reserve`}
                 />
                 <AdminStatCard
                   icon={Clock3}
-                  label="Recent Updates"
+                  label="Recent updates"
                   value={recentUpdateCount}
+                  description="Changes made in the last 7 days"
                 />
               </div>
             </div>
           </section>
 
-          <section className="admin-card">
-            <div className="admin-card-body">
-              <div className="admin-card-header">
-                <div>
-                  <h2>Quick actions</h2>
-                  <p>Open the most common admin tasks.</p>
+          <section className="admin-dashboard-grid">
+            <div className="admin-card">
+              <div className="admin-card-body">
+                <div className="admin-card-header">
+                  <div>
+                    <h2>Quick actions</h2>
+                    <p>Jump straight into the most common admin tasks.</p>
+                  </div>
+                </div>
+
+                <div className="admin-quick-actions-grid">
+                  {QUICK_ACTIONS.map((item) => (
+                    <Link key={item.to} to={item.to} className="admin-quick-action">
+                      <span>
+                        <strong>{item.label}</strong>
+                        <span className="admin-quick-action-copy">{item.description}</span>
+                      </span>
+                      <ArrowUpRight size={16} aria-hidden="true" />
+                    </Link>
+                  ))}
                 </div>
               </div>
+            </div>
 
-              <div className="admin-page-toolbar">
-                {QUICK_ACTIONS.map((item) => (
-                  <Link key={item.to} to={item.to} className="admin-button admin-button-secondary">
-                    <span>{item.label}</span>
+            <div className="admin-card">
+              <div className="admin-card-body">
+                <div className="admin-card-header">
+                  <div>
+                    <h2>Latest activity</h2>
+                    <p>The newest publishing changes across managed content.</p>
+                  </div>
+                  <Link to={ADMIN_ACTIVITY_PATH} className="admin-button admin-button-ghost">
+                    <span>View all</span>
                     <ArrowUpRight size={16} />
                   </Link>
-                ))}
+                </div>
+
+                {recentActivity.length === 0 ? (
+                  <AdminNotice tone="empty">No activity has been recorded yet.</AdminNotice>
+                ) : (
+                  <div className="admin-record-list">
+                    {recentActivity.map((item) => (
+                      <AdminActivityRow key={`${item.type}-${item.id}`} item={item} compact />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </section>

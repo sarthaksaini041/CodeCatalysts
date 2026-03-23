@@ -43,3 +43,10 @@ pnpm-debug.log*
 
 # OS metadata
 Desktop.ini
+
+# Local scratch / artifact files
+diff_*.txt
+status*.txt
+log_*.txt
+idea.txt
+website/patch_admin.py

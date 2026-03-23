@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { moveItem } from '../utils/content';
 
 function sortByDisplayOrder(items) {
@@ -16,6 +16,18 @@ export function useAdminCollection(service) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const itemsRef = useRef(items);
+
+  const setItemsState = useCallback((nextItemsOrUpdater) => {
+    setItems((current) => {
+      const nextItems = typeof nextItemsOrUpdater === 'function'
+        ? nextItemsOrUpdater(current)
+        : nextItemsOrUpdater;
+
+      itemsRef.current = nextItems;
+      return nextItems;
+    });
+  }, []);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -23,75 +35,92 @@ export function useAdminCollection(service) {
 
     try {
       const records = await service.list();
-      setItems(sortByDisplayOrder(records));
+      setItemsState(sortByDisplayOrder(records));
     } catch (loadError) {
       setError(loadError.message || 'Unable to load records.');
     } finally {
       setLoading(false);
     }
-  }, [service]);
-
-  useEffect(() => {
-    loadItems();
-  }, [loadItems]);
+  }, [service, setItemsState]);
 
   const createItem = useCallback(async (payload) => {
     const created = await service.create(payload);
-    const nextItems = sortByDisplayOrder([...items, created]).map((item, index) => ({
+    const nextItems = sortByDisplayOrder([...itemsRef.current, created]).map((item, index) => ({
       ...item,
       display_order: index,
     }));
-    setItems(nextItems);
-    await service.reorder(nextItems);
-    return created;
-  }, [items, service]);
+
+    setItemsState(nextItems);
+
+    try {
+      await service.reorder(nextItems);
+    } catch (reorderError) {
+      await loadItems().catch(() => undefined);
+      throw reorderError;
+    }
+
+    return nextItems.find((item) => item.id === created.id) || created;
+  }, [loadItems, service, setItemsState]);
 
   const updateItem = useCallback(async (id, payload) => {
     const updated = await service.update(id, payload);
-    setItems((current) => sortByDisplayOrder(
+    setItemsState((current) => sortByDisplayOrder(
       current.map((item) => (item.id === id ? updated : item)),
     ));
     return updated;
-  }, [service]);
+  }, [service, setItemsState]);
 
   const removeItem = useCallback(async (id) => {
     await service.remove(id);
-    const nextItems = items
+
+    const nextItems = itemsRef.current
       .filter((item) => item.id !== id)
       .map((item, index) => ({
         ...item,
         display_order: index,
       }));
-    setItems(nextItems);
-    await service.reorder(nextItems);
-  }, [items, service]);
+
+    setItemsState(nextItems);
+
+    try {
+      await service.reorder(nextItems);
+    } catch (reorderError) {
+      await loadItems().catch(() => undefined);
+      throw reorderError;
+    }
+  }, [loadItems, service, setItemsState]);
 
   const reorderItems = useCallback(async (index, direction) => {
+    const previousItems = itemsRef.current;
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
-    if (index < 0 || targetIndex < 0 || targetIndex >= items.length) {
+    if (index < 0 || targetIndex < 0 || targetIndex >= previousItems.length) {
       return false;
     }
 
-    const reordered = moveItem(items, index, targetIndex).map((item, orderIndex) => ({
+    const reordered = moveItem(previousItems, index, targetIndex).map((item, orderIndex) => ({
       ...item,
       display_order: orderIndex,
     }));
 
-    setItems(reordered);
+    setItemsState(reordered);
 
     try {
       await service.reorder(reordered);
       return true;
     } catch (reorderError) {
-      setItems(items);
+      setItemsState(previousItems);
       throw reorderError;
     }
-  }, [items, service]);
+  }, [service, setItemsState]);
+
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
 
   return {
     items,
-    setItems,
+    setItems: setItemsState,
     loading,
     error,
     setError,

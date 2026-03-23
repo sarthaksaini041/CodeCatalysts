@@ -5,6 +5,7 @@ const ALLOWED_CONTENT_TYPES = ['application/json'];
 const MAX_PAYLOAD_BYTES = 32 * 1024;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 25;
+const ALLOWED_FETCH_SITES = new Set(['same-origin', 'same-site', 'none']);
 const ALLOWED_DOMAINS = new Set([
   'Frontend Development',
   'Backend Development',
@@ -38,6 +39,16 @@ const requestRateLimiter = new Map();
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeOrigin = (value) => normalizeString(value).replace(/\/$/, '');
+
+const getContentLength = (req) => {
+  const raw = normalizeString(req.headers['content-length']);
+  if (!raw) {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+};
 
 const getClientIp = (req) => {
   const forwardedFor = normalizeString(req.headers['x-forwarded-for']);
@@ -152,15 +163,28 @@ const isAllowedOrigin = (req, origin) => {
   return requestOriginMatchesHost(req, origin) || getAllowedOrigins().has(normalizeOrigin(origin));
 };
 
+const isAllowedFetchSite = (req) => {
+  const fetchSite = normalizeString(req.headers['sec-fetch-site']).toLowerCase();
+
+  if (!fetchSite) {
+    return true;
+  }
+
+  return ALLOWED_FETCH_SITES.has(fetchSite);
+};
+
 const applyCorsHeaders = (req, res) => {
   const origin = normalizeOrigin(req.headers.origin);
 
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '600');
 
   if (origin && isAllowedOrigin(req, origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -185,6 +209,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  if (!isAllowedFetchSite(req)) {
+    return res.status(403).json({ error: 'Cross-site requests are not allowed.' });
+  }
+
   if (!isAllowedOrigin(req, origin)) {
     return res.status(403).json({ error: 'Request origin is not allowed.' });
   }
@@ -202,6 +230,10 @@ export default async function handler(req, res) {
     return res.status(415).json({ error: 'Requests must use application/json.' });
   }
 
+  if (getContentLength(req) > MAX_PAYLOAD_BYTES) {
+    return res.status(413).json({ error: 'Request payload is too large.' });
+  }
+
   const supabase = getSupabase();
   if (!supabase) {
     return res.status(500).json({
@@ -211,6 +243,10 @@ export default async function handler(req, res) {
 
   try {
     if (typeof req.body === 'string' && Buffer.byteLength(req.body, 'utf8') > MAX_PAYLOAD_BYTES) {
+      return res.status(413).json({ error: 'Request payload is too large.' });
+    }
+
+    if (req.body && typeof req.body === 'object' && Buffer.byteLength(JSON.stringify(req.body), 'utf8') > MAX_PAYLOAD_BYTES) {
       return res.status(413).json({ error: 'Request payload is too large.' });
     }
 

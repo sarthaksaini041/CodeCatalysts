@@ -92,13 +92,13 @@ const Hero = () => {
           display: grid;
           justify-items: center;
           align-items: start;
-          row-gap: clamp(1rem, 1.8vw, 1.6rem);
-          transform: translateY(clamp(6.2rem, 10vh, 8.5rem));
+          row-gap: clamp(1.2rem, 2vw, 1.8rem);
+          margin-top: clamp(12vh, 16vh, 15vh);
+          transform: translateY(clamp(36px, 5vh, 68px));
         }
 
         .hero-title-stage {
           width: 100%;
-          min-height: clamp(9.5rem, 16vw, 12.4rem);
           display: grid;
           place-items: center;
         }
@@ -107,7 +107,7 @@ const Hero = () => {
           width: min(100%, 860px);
           display: grid;
           justify-items: center;
-          row-gap: clamp(1rem, 1.8vw, 1.45rem);
+          row-gap: 1.5rem;
         }
 
         .hero-title {
@@ -174,12 +174,12 @@ const Hero = () => {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 1rem;
-          padding: 0.96rem 1.28rem;
+          gap: 1.5rem;
+          padding: 0.96rem 1.8rem;
           border-radius: 999px;
           background: rgba(8, 12, 24, 0.82);
           border: 1px solid rgba(255, 255, 255, 0.05);
-          margin: 0 auto;
+          margin: 1.5rem auto 0;
         }
 
         .hero-metric {
@@ -228,11 +228,12 @@ const Hero = () => {
           }
 
           .hero-center-stack {
-            transform: translateY(clamp(4.8rem, 8vh, 6rem));
+            margin-top: clamp(9vh, 12vh, 11vh);
+            transform: translateY(clamp(20px, 3.2vh, 40px));
           }
 
           .hero-title-stage {
-            min-height: clamp(10.3rem, 24vw, 14rem);
+            /* removed min-height override */
           }
 
           .hero-title {
@@ -266,11 +267,12 @@ const Hero = () => {
           }
 
           .hero-center-stack {
-            transform: translateY(clamp(4rem, 7vh, 5rem));
+            margin-top: clamp(8vh, 11vh, 10vh);
+            transform: translateY(clamp(14px, 2.6vh, 30px));
           }
 
           .hero-title-stage {
-            min-height: clamp(8.8rem, 30vw, 11.4rem);
+            /* mobile specifics */
           }
 
           .hero-title {
